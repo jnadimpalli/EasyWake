@@ -1,10 +1,9 @@
 //
 //  ContentView.swift
-//  EasyWake
+//  Easy Wake
 //
-//  Created by Jitesh Nadimpalli on 7/9/25.
+//  Created by Prafulla Bhupathi Raju on 6/24/25.
 //
-
 import SwiftUI
 
 struct ContentView: View {
@@ -20,5 +19,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    SplashScreenView()
 }

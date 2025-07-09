@@ -7,11 +7,28 @@
 
 import SwiftUI
 
+@MainActor
+class AppEnvironment: ObservableObject {
+    @Published var alarmStore = AlarmStore()
+    @Published var weatherViewModel = WeatherViewModel()
+    
+    init() {
+        // Any app-wide initialization can go here
+    }
+}
+
+// Update your App file:
 @main
 struct EasyWakeApp: App {
+    @StateObject private var appEnvironment = AppEnvironment()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppWithBanner {
+                RootView()
+            }
+            .environmentObject(appEnvironment.alarmStore)
+            .environmentObject(appEnvironment.weatherViewModel)
         }
     }
 }

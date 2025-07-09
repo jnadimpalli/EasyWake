@@ -29,9 +29,22 @@
 		697B982F2E1EFA1600CF3BE3 /* EasyWakeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EasyWakeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		697B988E2E1F132300CF3BE3 /* Exceptions for "EasyWake" folder in "EasyWake" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 697B98162E1EFA1400CF3BE3 /* EasyWake */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		697B98192E1EFA1400CF3BE3 /* EasyWake */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				697B988E2E1F132300CF3BE3 /* Exceptions for "EasyWake" folder in "EasyWake" target */,
+			);
 			path = EasyWake;
 			sourceTree = "<group>";
 		};
@@ -391,12 +404,19 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = EasyWake/EasyWake.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DLR89B48GN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EasyWake/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Easy Wake";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app needs to read your Calendar so we can auto-populate alarms for your events.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to show local weather and traffic conditions.";
+				INFOPLIST_KEY_NSRemindersUsageDescription = "We need to access your reminders to add reminder alarms";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -430,12 +450,19 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = EasyWake/EasyWake.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DLR89B48GN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EasyWake/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Easy Wake";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app needs to read your Calendar so we can auto-populate alarms for your events.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to show local weather and traffic conditions.";
+				INFOPLIST_KEY_NSRemindersUsageDescription = "We need to access your reminders to add reminder alarms";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

@@ -1,7 +1,11 @@
+// RegistrationView.swift
 import SwiftUI
 import CryptoKit   // ← for SHA-256
 
 struct RegistrationView: View {
+    // MARK: –– Session
+    @EnvironmentObject var session: SessionManager
+
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -13,6 +17,8 @@ struct RegistrationView: View {
     @AppStorage("didCompleteOnboarding") private var didCompleteOnboarding = false
     @AppStorage("savedUsername")     private var savedUsername = ""
     @AppStorage("savedPassword")     private var savedPassword = ""
+    @AppStorage("savedFirstName") private var savedFirstName = ""
+    @AppStorage("savedLastName")  private var savedLastName  = ""
     
     private let lambdaURL = "https://6qvleq3o26pgdp7jmr4aachf5y0qbkfi.lambda-url.us-east-1.on.aws/"
 
@@ -34,7 +40,7 @@ struct RegistrationView: View {
                 .padding(.trailing, 10)
 
                 // MARK: Title
-                Text("Welcome to EZ Wake!")
+                Text("Welcome to Easy Wake!")
                     .font(.title).bold()
                 Text("Description").font(.subheadline)
 
@@ -128,6 +134,12 @@ struct RegistrationView: View {
 
                     // “Skip for now” button
                     Button("Skip for now") {
+                        Task {
+                            await MainActor.run {
+                                session.currentUser     = ""
+                                session.currentPassword = ""
+                            }
+                        }
                         didCompleteOnboarding = true
                         navigateToAlarmList = true
                     }
@@ -148,13 +160,13 @@ struct RegistrationView: View {
         .navigationBarBackButtonHidden(true)
         // MARK: Navigation
         .navigationDestination(isPresented: $navigateToLogin) {
-            LoginView()
+            LoginView().environmentObject(session)
         }
         .navigationDestination(isPresented: $navigateToUserSettings) {
-            UserSettingsView()
+            UserSettingsView(origin: .onboarding).environmentObject(session)
         }
         .navigationDestination(isPresented: $navigateToAlarmList) {
-            AlarmListView()
+            AlarmListView().environmentObject(session)
         }
     }
 
@@ -207,6 +219,25 @@ struct RegistrationView: View {
             errorMessage = "Invalid server URL"
             return
         }
+        
+        let nameOptions = [
+                    "Newbie Nick",
+                    "Novice Nancy",
+                    "Willie Makeit",
+                    "Fresh Face Frank",
+                    "Rookie Rex",
+                    "Just Joined Jessie",
+                    "Just Joined Jesse",
+                    "Data Dave"
+                ]
+        let chosen = nameOptions.randomElement()!
+        let parts  = chosen.split(separator: " ")
+        let first  = parts.dropLast().joined(separator: " ")
+        let last   = "\(parts.last!)\(Int.random(in: 1...10_000_000))"
+
+        // Save into AppStorage so ProfileView can pick it up later
+        savedFirstName = first
+        savedLastName  = last
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -215,7 +246,9 @@ struct RegistrationView: View {
         let payload: [String: Any] = [
             "userId":    email,
             "operation": "create",
-            "password":  hashPassword(password)
+            "password":  hashPassword(password),
+            "firstName": first,
+            "lastName":  last
         ]
 
         do {
@@ -237,6 +270,18 @@ struct RegistrationView: View {
             if httpResp.statusCode == 200 {
                 savedUsername = email
                 savedPassword = password
+                
+                // persist raw password securely in Keychain
+                let pwdData = Data(password.utf8)
+                KeychainHelper.standard.save(pwdData,
+                    service: "com.irohtechnologies.EasyWake",
+                    account: email)
+                
+                await MainActor.run {
+                    session.currentUser     = email
+                    session.currentPassword = password
+                }
+                
                 didCompleteOnboarding = true
                 navigateToUserSettings = true
             } else {
@@ -255,6 +300,6 @@ struct RegistrationView: View {
 
 #Preview {
     NavigationStack {
-        RegistrationView()
+        RegistrationView().environmentObject(SessionManager())
     }
 }

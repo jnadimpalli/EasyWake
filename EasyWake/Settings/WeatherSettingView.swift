@@ -1,9 +1,9 @@
-// WeatherSettingView.swift
+// WeatherSettingsView.swift
 
 import SwiftUI
 import CoreLocation
 
-// MARK: - Data Models
+// MARK: - Settings Data Models
 struct SavedLocation: Identifiable, Codable {
     var id = UUID()
     let name: String
@@ -40,7 +40,7 @@ struct SavedLocation: Identifiable, Codable {
     }
 }
 
-// MARK: - View Model
+// MARK: - Settings View Model
 class WeatherSettingsViewModel: ObservableObject {
     @AppStorage("temperatureUnit") var useCelsius = false
     @AppStorage("dailySummaryEnabled") var dailySummaryEnabled = true
@@ -140,12 +140,19 @@ class WeatherSettingsViewModel: ObservableObject {
     }
 }
 
-// MARK: - Main View
+// MARK: - Settings View
 struct WeatherSettingView: View {
     @StateObject private var viewModel = WeatherSettingsViewModel()
     @State private var showAddLocation = false
     @State private var showResetAlert = false
     @Environment(\.dismiss) private var dismiss
+    
+    // Support for both navigation modes
+    let showDoneButton: Bool
+    
+    init(showDoneButton: Bool = true) {
+        self.showDoneButton = showDoneButton
+    }
     
     var body: some View {
         NavigationStack {
@@ -275,51 +282,6 @@ struct WeatherSettingView: View {
                     }
                 }
                 
-                // MARK: - Saved Locations Section
-                Section {
-                    ForEach(viewModel.savedLocations) { location in
-                        LocationRow(location: location)
-                            .deleteDisabled(location.isCurrentLocation)
-                    }
-                    .onDelete { indexSet in
-                        for index in indexSet {
-                            let location = viewModel.savedLocations[index]
-                            if !location.isCurrentLocation {
-                                viewModel.removeLocation(location)
-                            }
-                        }
-                    }
-                    .onMove { source, destination in
-                        viewModel.moveLocation(from: source, to: destination)
-                    }
-                    
-                    Button(action: {
-                        showAddLocation = true
-                    }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.blue)
-                            Text("Add Location")
-                                .foregroundColor(.blue)
-                        }
-                    }
-                } header: {
-                    HStack {
-                        Label("SAVED LOCATIONS", systemImage: "location.circle")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
-                        EditButton()
-                            .font(.caption)
-                    }
-                } footer: {
-                    Text("Swipe left to delete. Drag to reorder.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
                 // MARK: - About Section
                 Section {
                     HStack {
@@ -341,12 +303,20 @@ struct WeatherSettingView: View {
                         .foregroundColor(.secondary)
                 }
             }
+            // SOLUTION: Add padding to keep content above bottom nav bar
+            .safeAreaInset(edge: .bottom) {
+                // This creates space for your bottom nav bar
+                // Adjust the height to match your bottom nav bar height
+                Color.clear.frame(height: 96) // 44 (nav height) + 12 (top padding) + 40 (bottom padding)
+            }
             .navigationTitle("Weather Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                if showDoneButton {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
+                            dismiss()
+                        }
                     }
                 }
             }
@@ -480,7 +450,5 @@ extension WeatherSettingsViewModel {
 
 // MARK: - Preview
 #Preview {
-    NavigationStack {
-        WeatherSettingView()
-    }
+    WeatherSettingView()
 }

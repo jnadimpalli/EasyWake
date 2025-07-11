@@ -1,3 +1,5 @@
+// RootView.swift
+
 import SwiftUI
 
 struct RootView: View {
@@ -20,4 +22,8 @@ struct RootView: View {
       }
     }
   }
+}
+
+#Preview {
+    RootView()
 }

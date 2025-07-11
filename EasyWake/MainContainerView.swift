@@ -20,7 +20,8 @@ struct MainContainerView: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity)
 
       // MARK: Custom Bottom Bar
-      VStack { Spacer()
+      VStack {
+          Spacer()
           BottomNavBar(selection: $selection)
       }
     }

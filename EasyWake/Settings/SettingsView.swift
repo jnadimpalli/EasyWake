@@ -4,7 +4,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                NavigationLink(destination: UserProfileView()) {
+                NavigationLink(destination: ProfileView()) {
                     Label("User Profile", systemImage: "person.circle")
                 }
 

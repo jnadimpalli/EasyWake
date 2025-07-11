@@ -1,3 +1,5 @@
+// GetStartedView.swift
+
 import SwiftUI
 
 // 👇 This is required before using Feature inside GetStartedView
@@ -22,7 +24,6 @@ struct GetStartedView: View {
         NavigationStack {
             VStack(spacing: 24) {
                 // MARK: Feature Carousel
-#if os(iOS)
                 TabView {
                     ForEach(features) { feature in
                         VStack {
@@ -38,9 +39,6 @@ struct GetStartedView: View {
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
                 .frame(height: 400)
-#else
-                Text("TabView is only supported on iOS.")
-#endif
 
                 Spacer()
 
@@ -94,10 +92,4 @@ struct GetStartedView: View {
 #Preview {
     GetStartedView()
 }
-//
-//  GetStartedView.swift
-//  EZ Wake
-//
-//  Created by Prafulla Bhupathi Raju on 6/24/25.
-//
 

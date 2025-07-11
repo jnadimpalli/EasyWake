@@ -246,6 +246,7 @@ struct AlarmListView: View {
         // Clear any stale UI state when alarms change
         cleanupStaleUIState()
       }
+      .navigationBarBackButtonHidden(true)
     }
   }
 

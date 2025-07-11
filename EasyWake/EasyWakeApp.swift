@@ -21,14 +21,27 @@ class AppEnvironment: ObservableObject {
 @main
 struct EasyWakeApp: App {
     @StateObject private var appEnvironment = AppEnvironment()
+    @StateObject private var session = SessionManager()
     
     var body: some Scene {
         WindowGroup {
             AppWithBanner {
-                RootView()
-            }
-            .environmentObject(appEnvironment.alarmStore)
-            .environmentObject(appEnvironment.weatherViewModel)
+                Group {
+                  if session.isLoggedIn {
+                    // main flow (tabs + bottom bar)
+                    RootView()
+                      .environmentObject(session)
+                  } else {
+                    // onboarding flow (no bottom bar)
+                    NavigationStack {
+                      RegistrationView()
+                        .environmentObject(session)
+                    }
+                  }
+                }
+              }
+              .environmentObject(appEnvironment.alarmStore)
+              .environmentObject(appEnvironment.weatherViewModel)
         }
     }
 }

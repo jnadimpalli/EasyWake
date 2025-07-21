@@ -1,4 +1,4 @@
-// WeatherAlarmCard.swift - Weather-Alarm Integration Card
+// WeatherAlarmCard.swift - Fixed Version
 
 import SwiftUI
 import WeatherKit
@@ -6,7 +6,7 @@ import WeatherKit
 // MARK: - Weather Alarm Adjustment Data Model
 struct WeatherAlarmAdjustment: Identifiable, Equatable {
     let id = UUID()
-    let alarmId: UUID  // Store ID instead of full alarm
+    let alarmId: UUID
     let originalTime: Date
     let adjustedTime: Date
     let adjustmentMinutes: Int
@@ -14,30 +14,27 @@ struct WeatherAlarmAdjustment: Identifiable, Equatable {
     let weatherCondition: WeatherCondition
     let routeSummary: String
     let explanation: String
-    let isSignificant: Bool // ≥ 5 minutes adjustment
+    let isSignificant: Bool
     
-    // Add computed property to get current alarm
     public func getCurrentAlarm(from alarmStore: AlarmStore) -> Alarm? {
         return alarmStore.alarms.first { $0.id == alarmId }
     }
     
     var adjustmentText: String {
         if adjustmentMinutes < 0 {
-            // Can sleep in!
             let sleepInMinutes = abs(adjustmentMinutes)
             if sleepInMinutes < 60 {
-                return "\(sleepInMinutes) min extra sleep!"
+                return "\(sleepInMinutes) min extra"
             } else {
                 let hours = sleepInMinutes / 60
                 let minutes = sleepInMinutes % 60
                 if minutes == 0 {
-                    return "\(hours) hr extra sleep!"
+                    return "\(hours) hr extra"
                 } else {
-                    return "\(hours) hr \(minutes) min extra sleep!"
+                    return "\(hours) hr \(minutes) min"
                 }
             }
         } else {
-            // Need to wake up earlier
             if adjustmentMinutes < 60 {
                 return "\(adjustmentMinutes) min earlier"
             } else {
@@ -56,7 +53,6 @@ struct WeatherAlarmAdjustment: Identifiable, Equatable {
         return adjustmentMinutes < 0
     }
     
-    // MARK: - Equatable conformance
     static func == (lhs: WeatherAlarmAdjustment, rhs: WeatherAlarmAdjustment) -> Bool {
         return lhs.id == rhs.id &&
                lhs.alarmId == rhs.alarmId &&
@@ -77,168 +73,149 @@ struct WeatherAlarmCard: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var isPressed = false
     
-    // Add computed property for current alarm
     private var alarm: Alarm? {
         adjustment.getCurrentAlarm(from: alarmStore)
     }
     
     var body: some View {
         if let alarm = alarm {
-            Button(action: onTap) {
-                VStack(spacing: 0) {
-                    // Header with weather icon and condition
-                    headerSection(alarm: alarm)
-                    
-                    // Time Adjustment Section
-                    timeAdjustmentSection
-                    
-                    // Route Summary
-                    routeSummarySection
-                }
+            VStack(spacing: 0) {
+                // Header with weather icon and condition
+                headerSection(alarm: alarm)
+                
+                // Time Adjustment Section
+                timeAdjustmentSection
+                
+                // Route Summary
+                routeSummarySection
             }
-            .buttonStyle(PlainButtonStyle())
             .background(cardBackground)
             .cornerRadius(12)
             .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: isPressed)
-            .onLongPressGesture(minimumDuration: 0.5) {
-                onLongPress()
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
-            }
             .onTapGesture {
                 let selectionFeedback = UISelectionFeedbackGenerator()
                 selectionFeedback.selectionChanged()
                 onTap()
             }
+            .onLongPressGesture(minimumDuration: 0.5) {
+                onLongPress()
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
+            }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityLabel(alarm: alarm))
             .accessibilityHint("Tap to view alarm details, or swipe up to dismiss")
-        } else {
-            // Handle case where alarm was deleted
-            EmptyView()
         }
     }
     
-    // MARK: - Subviews (broken down to fix complex expression)
+    // MARK: - Subviews
     private func headerSection(alarm: Alarm) -> some View {
-        VStack(spacing: 0) {
-            // Top row with dismiss button
-            HStack {
-                Spacer()
+        HStack(alignment: .top, spacing: 12) {
+            // Weather Icon with background
+            ZStack {
+                Circle()
+                    .fill(adjustment.weatherCondition.severity.color.opacity(0.2))
+                    .frame(width: 40, height: 40)
                 
-                // Dismiss Button - moved to top right
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
-                        .foregroundColor(.secondary)
-                        .background(Color(.systemBackground))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(PlainButtonStyle())
+                Image(systemName: adjustment.weatherCondition.icon)
+                    .font(.title3)
+                    .foregroundColor(adjustment.weatherCondition.severity.color)
+                    .symbolRenderingMode(.multicolor)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
             
-            // Main header content
-            HStack(spacing: 12) {
-                // Weather Icon
-                ZStack {
-                    Circle()
-                        .fill(adjustment.weatherCondition.severity.color.opacity(0.2))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: adjustment.weatherCondition.icon)
-                        .font(.title3)
-                        .foregroundColor(adjustment.weatherCondition.severity.color)
-                        .symbolRenderingMode(.multicolor)
-                }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(alarm.name)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    // Alarm Name
-                    Text(alarm.name)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                    
-                    // Weather Condition
-                    Text(adjustment.weatherCondition.description)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-                
-                Spacer()
+                Text(adjustment.weatherCondition.description)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+            
+            Spacer()
+            
+            // Dismiss Button - aligned with alarm name
+            Button(action: onDismiss) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.secondary.opacity(0.6))
+            }
+            .buttonStyle(PlainButtonStyle())
+            .offset(y: -2) // Fine-tune vertical alignment with text
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
     }
     
     private var timeAdjustmentSection: some View {
         VStack(spacing: 8) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Original Time")
+                    Text("ORIGINAL TIME")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.secondary)
                         .textCase(.uppercase)
                     
-                    // Use the alarm's display time
-                    if let alarm = alarm {
-                        Text(alarm.displayTime)
-                            .font(.system(size: 15, weight: .regular))
-                            .foregroundColor(.secondary)
-                            .strikethrough(!adjustment.canSleepIn, color: .secondary)
-                    } else {
-                        Text(adjustment.originalTime, style: .time)
-                            .font(.system(size: 15, weight: .regular))
-                            .foregroundColor(.secondary)
-                            .strikethrough(!adjustment.canSleepIn, color: .secondary)
-                    }
+                    Text(alarm!.displayTime)
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.secondary)
+                        .strikethrough(adjustment.adjustmentMinutes != 0, color: .secondary)
                 }
                 
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(adjustment.canSleepIn ? "Sleep Until" : "Wake Up At")
+                    Text(adjustment.canSleepIn ? "SLEEP UNTIL" : "WAKE UP AT")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(adjustment.canSleepIn ? .green : .secondary)
+                        .foregroundColor(adjustment.canSleepIn ? .green : .orange)
                         .textCase(.uppercase)
                     
-                    // Format the adjusted time in local timezone
                     Text(formatLocalTime(adjustment.adjustedTime))
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(adjustment.canSleepIn ? .green : .secondary)
+                        .foregroundColor(adjustment.canSleepIn ? .green : .orange)
                 }
             }
             
-            // Show sleep-in bonus or wake-early warning
-            if adjustment.canSleepIn {
-                HStack(spacing: 8) {
-                    Image(systemName: "moon.zzz.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.green)
-                    
-                    Text("Good news! You can sleep in \(adjustment.adjustmentText)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.green)
-                        .lineLimit(1)
-                    
-                    Spacer()
+            // Sleep-in bonus or wake-early warning - FIXED HEIGHT
+            Group {
+                if adjustment.canSleepIn {
+                    HStack(spacing: 8) {
+                        Image(systemName: "moon.zzz.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.green)
+                        
+                        Text("Good news! You can sleep in \(adjustment.adjustmentText)")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.green)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .cornerRadius(8)
+                } else {
+                    // Wake early section with same height as sleep-in banner
+                    HStack(spacing: 8) {
+                        Text("\(adjustment.adjustmentText) • \(adjustment.explanation)")
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8) // Slightly more padding to match banner height
+                    .background(Color.clear) // Invisible background to maintain consistent spacing
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.green.opacity(0.1))
-                .cornerRadius(8)
-            } else if adjustment.adjustmentMinutes > 0 {
-                Text("\(adjustment.adjustmentText) • \(adjustment.explanation)")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
             }
+            .frame(height: 32) // Fixed height for both states
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
@@ -283,7 +260,6 @@ struct WeatherAlarmCard: View {
         Color.black.opacity(colorScheme == .dark ? 0.3 : 0.15)
     }
     
-    // MARK: - Simplified accessibility label
     private func accessibilityLabel(alarm: Alarm) -> String {
         let alarmName = alarm.name
         let weatherDesc = adjustment.weatherCondition.description
@@ -300,7 +276,7 @@ struct WeatherAlarmCard: View {
     }
 }
 
-// MARK: - Weather Alarm Carousel Container
+// MARK: - Weather Alarm Carousel Container (With Proper Width)
 struct WeatherAlarmCarousel: View {
     let adjustments: [WeatherAlarmAdjustment]
     let onCardTap: (WeatherAlarmAdjustment) -> Void
@@ -312,13 +288,15 @@ struct WeatherAlarmCarousel: View {
     @State private var autoAdvanceTimer: Timer?
     @State private var pauseAutoAdvance = false
     @State private var isUserInteracting = false
+    @State private var dragOffset: CGFloat = 0
     
     private let maxDisplayedAlarms = 5
+    private let cardHeight: CGFloat = 160 // Fixed height for all cards
     
     var body: some View {
         VStack(spacing: 0) {
             if adjustments.count == 1 {
-                // Single card
+                // Single card with reduced width
                 WeatherAlarmCard(
                     adjustment: adjustments[0],
                     onTap: { onCardTap(adjustments[0]) },
@@ -326,72 +304,91 @@ struct WeatherAlarmCarousel: View {
                     onLongPress: { onCardLongPress(adjustments[0]) }
                 )
                 .environmentObject(alarmStore)
-                .frame(minHeight: 120)
+                .padding(.horizontal, 16)
+                .frame(height: cardHeight) // Fixed height
             } else {
                 // Multiple cards carousel
-                VStack(spacing: 8) {
-                    TabView(selection: $currentIndex) {
-                        ForEach(Array(displayedAdjustments.enumerated()), id: \.element.id) { index, adjustment in
-                            WeatherAlarmCard(
-                                adjustment: adjustment,
-                                onTap: { onCardTap(adjustment) },
-                                onDismiss: { onCardDismiss(adjustment) },
-                                onLongPress: { onCardLongPress(adjustment) }
-                            )
-                            .environmentObject(alarmStore)
-                            .tag(index)
-                        }
-                    }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    .frame(height: 120)
-                    .onReceive(Timer.publish(every: 5, on: .main, in: .common).autoconnect()) { _ in
-                        if !pauseAutoAdvance && !isUserInteracting && displayedAdjustments.count > 1 {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                currentIndex = (currentIndex + 1) % displayedAdjustments.count
+                ZStack(alignment: .bottom) {
+                    GeometryReader { geometry in
+                        HStack(spacing: 0) {
+                            ForEach(Array(displayedAdjustments.enumerated()), id: \.element.id) { index, adjustment in
+                                WeatherAlarmCard(
+                                    adjustment: adjustment,
+                                    onTap: {
+                                        // Only trigger tap if not dragging
+                                        if abs(dragOffset) < 10 {
+                                            onCardTap(adjustment)
+                                        }
+                                    },
+                                    onDismiss: { onCardDismiss(adjustment) },
+                                    onLongPress: { onCardLongPress(adjustment) }
+                                )
+                                .environmentObject(alarmStore)
+                                .frame(width: geometry.size.width - 32) // REDUCED WIDTH with margins
+                                .frame(height: cardHeight) // Fixed height
+                                .padding(.horizontal, 16)
                             }
                         }
-                    }
-                    .gesture(
-                        DragGesture()
-                            .onChanged { _ in
-                                isUserInteracting = true
-                                pauseAutoAdvance = true
-                            }
-                            .onEnded { _ in
-                                isUserInteracting = false
-                                // Resume auto-advance after 10 seconds
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                                    pauseAutoAdvance = false
+                        .offset(x: -CGFloat(currentIndex) * geometry.size.width + dragOffset)
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    isUserInteracting = true
+                                    pauseAutoAdvance = true
+                                    dragOffset = value.translation.width
                                 }
-                            }
-                    )
-                    
-                    // Page Indicators
-                    if displayedAdjustments.count > 1 {
-                        HStack(spacing: 8) {
-                            ForEach(0..<displayedAdjustments.count, id: \.self) { index in
-                                Circle()
-                                    .fill(index == currentIndex ? Color.primary : Color.secondary.opacity(0.5))
-                                    .frame(width: 6, height: 6)
-                                    .scaleEffect(index == currentIndex ? 1.0 : 0.8)
-                                    .animation(.easeInOut(duration: 0.25), value: currentIndex)
-                            }
-                            
-                            if hiddenAlarmsCount > 0 {
-                                Text("and \(hiddenAlarmsCount) more")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                    .padding(.leading, 4)
-                            }
-                        }
-                        .padding(.top, 4)
+                                .onEnded { value in
+                                    withAnimation(.spring()) {
+                                        let threshold = geometry.size.width * 0.3
+                                        
+                                        if value.translation.width > threshold && currentIndex > 0 {
+                                            currentIndex -= 1
+                                        } else if value.translation.width < -threshold && currentIndex < displayedAdjustments.count - 1 {
+                                            currentIndex += 1
+                                        }
+                                        
+                                        dragOffset = 0
+                                    }
+                                    
+                                    isUserInteracting = false
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                                        pauseAutoAdvance = false
+                                    }
+                                }
+                        )
                     }
+                    .frame(height: cardHeight)
+                    
+                    // Page Indicators - Positioned at bottom of ZStack
+                    HStack(spacing: 8) {
+                        ForEach(0..<displayedAdjustments.count, id: \.self) { index in
+                            Circle()
+                                .fill(index == currentIndex ? Color.primary : Color.secondary.opacity(0.5))
+                                .frame(width: 6, height: 6)
+                                .scaleEffect(index == currentIndex ? 1.0 : 0.8)
+                                .animation(.easeInOut(duration: 0.25), value: currentIndex)
+                        }
+                        
+                        if hiddenAlarmsCount > 0 {
+                            Text("and \(hiddenAlarmsCount) more")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .padding(.leading, 4)
+                        }
+                    }
+                    .padding(.bottom, -20) // Position below the card
+                }
+                .frame(height: cardHeight + 30) // Total height including space for dots
+            }
+        }
+        .onReceive(Timer.publish(every: 5, on: .main, in: .common).autoconnect()) { _ in
+            if !pauseAutoAdvance && !isUserInteracting && displayedAdjustments.count > 1 {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    currentIndex = (currentIndex + 1) % displayedAdjustments.count
                 }
             }
         }
-        .padding(.horizontal, 16)
         .onAppear {
-            // Reset to first item when adjustments change
             currentIndex = 0
         }
         .onChange(of: adjustments) { _, _ in
@@ -441,13 +438,12 @@ struct WeatherAlarmContainer: View {
                     // Weather Alarm Cards
                     WeatherAlarmCarousel(
                         adjustments: weatherAlarmService.activeAdjustments.map { alarmWithAdjustment in
-                            // Convert AlarmWithAdjustment to WeatherAlarmAdjustment
                             WeatherAlarmAdjustment(
                                 alarmId: alarmWithAdjustment.alarm.id,
                                 originalTime: alarmWithAdjustment.alarm.nextOccurrenceTime ?? alarmWithAdjustment.alarm.alarmTime,
                                 adjustedTime: alarmWithAdjustment.adjustment.adjustedWakeTime,
                                 adjustmentMinutes: alarmWithAdjustment.adjustment.adjustmentMinutes,
-                                extraTimeMinutes: 0, // This field doesn't exist in the new structure
+                                extraTimeMinutes: 0,
                                 weatherCondition: alarmWithAdjustment.weatherCondition,
                                 routeSummary: alarmWithAdjustment.routeSummary,
                                 explanation: alarmWithAdjustment.adjustment.reason,
@@ -455,7 +451,6 @@ struct WeatherAlarmContainer: View {
                             )
                         },
                         onCardTap: { adjustment in
-                            // Get the alarm directly from activeAdjustments
                             if let alarmWithAdjustment = weatherAlarmService.activeAdjustments.first(where: { $0.alarm.id == adjustment.alarmId }) {
                                 showingAlarmDetail = alarmWithAdjustment.alarm
                             }
@@ -469,6 +464,7 @@ struct WeatherAlarmContainer: View {
                     )
                     .environmentObject(alarmStore)
                 }
+                .padding(.bottom, 24) // INCREASED bottom padding for better spacing
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: hasAdjustments)
             }
@@ -483,20 +479,17 @@ struct WeatherAlarmContainer: View {
             AddAlarmView(
                 alarm: alarm,
                 onSave: { updatedAlarm in
-                    // Handle alarm updates
                     showingAlarmDetail = nil
                 },
                 onCancel: {
                     showingAlarmDetail = nil
                 },
                 onDelete: { deletedAlarm in
-                    // Handle alarm deletion
                     showingAlarmDetail = nil
                 }
             )
         }
         .actionSheet(item: $showingContextMenu) { adjustment in
-            // Get the current alarm from the store
             guard let alarm = adjustment.getCurrentAlarm(from: alarmStore) else {
                 return ActionSheet(
                     title: Text("Alarm Not Found"),

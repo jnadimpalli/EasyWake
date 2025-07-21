@@ -44,14 +44,14 @@ struct WeatherView: View {
                                     currentWeatherView
                                 }
                                 
-                                // Context-Aware Weather Alarm Container (Feature 2)
+                                // Context-Aware Weather Alarm Container
                                 ContextAwareWeatherAlarmContainer(
                                     weatherAlarmService: weatherAlarmService,
                                     routeAnalysisService: routeAnalysisService,
                                     weatherViewModel: viewModel
                                 )
                                 
-                                // Weather Alerts
+                                // Weather Alerts - These will now have proper spacing from alarm cards
                                 WeatherAlertsContainer(alertManager: viewModel.alertManager)
                                     .transition(.scale.combined(with: .opacity))
                                 

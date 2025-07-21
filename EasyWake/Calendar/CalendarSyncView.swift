@@ -113,9 +113,9 @@ struct CalendarSyncView: View {
                 // 4) Auto-populate Alarms (persisted)
                 Toggle("Auto-populate Alarms", isOn: $autoPopulate)
                     .padding(.horizontal)
-                    .onChange(of: autoPopulate) { on in
-                        if on { createAlarmsFromEvents() }
-                    }
+//                    .onChange(of: autoPopulate) { on in
+//                        if on { createAlarmsFromEvents() }
+//                    }
 
                 Spacer()
             }
@@ -186,22 +186,22 @@ struct CalendarSyncView: View {
     }
 
     // MARK: – auto-populate your AlarmStore
-    private func createAlarmsFromEvents() {
-      // 1) Remove any alarms we auto-populated last time,
-      //    but leave the rest of the user's alarms untouched.
-      alarmStore.alarms.removeAll { $0.isAutoPopulated }
-
-      // 2) For each upcoming event, create exactly one new alarm
-      for evt in filteredDisplayEvents() {
-        var alarm = Alarm()
-        alarm.name             = evt.title
-        alarm.schedule         = .specificDate(evt.dateObject)
-        alarm.time             = evt.dateObject
-        alarm.arrivalTime      = evt.dateObject
-        alarm.isAutoPopulated  = true
-        alarmStore.add(alarm)
-      }
-    }
+//    private func createAlarmsFromEvents() {
+//      // 1) Remove any alarms we auto-populated last time,
+//      //    but leave the rest of the user's alarms untouched.
+//      alarmStore.alarms.removeAll { $0.isAutoPopulated }
+//
+//      // 2) For each upcoming event, create exactly one new alarm
+//      for evt in filteredDisplayEvents() {
+//        var alarm = Alarm()
+//        alarm.name             = evt.title
+//        alarm.schedule         = .specificDate(evt.dateObject)
+//        alarm.time             = evt.dateObject
+//        alarm.arrivalTime      = evt.dateObject
+//        alarm.isAutoPopulated  = true
+//        alarmStore.add(alarm)
+//      }
+//    }
 
     // COMMENTED OUT: All Google Sign-In functionality
     // // MARK: – Google Sign-in + attach both OAuth & API key

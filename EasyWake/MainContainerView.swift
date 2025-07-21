@@ -13,7 +13,7 @@ struct MainContainerView: View {
         switch selection {
           case .profile: ProfileView()
           case .weather: WeatherView()
-          case .alarms: AlarmListView()
+          case .alarms: AlarmListView() // AlarmListView will use @EnvironmentObject
           case .calendar: CalendarSyncView()
         }
       }
@@ -31,4 +31,6 @@ struct MainContainerView: View {
 
 #Preview {
   MainContainerView()
+    .environmentObject(AlarmStore())
+    .environmentObject(DataCoordinator(alarmStore: AlarmStore(), profileViewModel: ProfileViewModel()))
 }

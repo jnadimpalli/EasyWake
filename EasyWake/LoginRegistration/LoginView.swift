@@ -1,49 +1,31 @@
 import SwiftUI
-import CryptoKit   // for SHA-256
+import CryptoKit
 import UIKit
 
-/// A thin SwiftUI wrapper around UIActivityIndicatorView
-struct ActivityIndicator: UIViewRepresentable {
-    let style: UIActivityIndicatorView.Style
-    func makeUIView(context: Context) -> UIActivityIndicatorView {
-        let spinner = UIActivityIndicatorView(style: style)
-        spinner.startAnimating()
-        return spinner
-    }
-    func updateUIView(_ uiView: UIActivityIndicatorView, context: Context) { }
-}
-
 struct LoginView: View {
-    // MARK: –– Form state
     @EnvironmentObject var session: SessionManager
-    @State private var username            = UserDefaults.standard.string(forKey: "savedUsername") ?? ""
-    @State private var password            = UserDefaults.standard.string(forKey: "savedPassword") ?? ""
-    @State private var rememberMe          = UserDefaults.standard.bool(forKey: "rememberMe")
-    @State private var showPassword        = false
-    @State private var errorMessage        = ""
-    
-    // MARK: –– Navigation
-    @State private var navigateToSignUp    = false
-    @State private var navigateToForgotPwd = false
-    @State private var navigateToAlarmList = false
-    
-    // MARK: –– Loading state
+    @State private var username = UserDefaults.standard.string(forKey: "savedUsername") ?? ""
+    @State private var password = UserDefaults.standard.string(forKey: "savedPassword") ?? ""
+    @State private var rememberMe = UserDefaults.standard.bool(forKey: "rememberMe")
+    @State private var showPassword = false
+    @State private var errorMessage = ""
     @State private var isLoading = false
     
-    // MARK: –– Persisted flags
-    @AppStorage("didCompleteOnboarding")   private var didCompleteOnboarding = false
-    @AppStorage("savedUsername")           private var savedUsername         = ""
-    @AppStorage("savedPassword")           private var savedPassword         = ""
-    @AppStorage("savedFirstName")          private var savedFirstName        = ""
-    @AppStorage("savedLastName")           private var savedLastName         = ""
+    @State private var navigateToSignUp = false
+    @State private var navigateToForgotPwd = false
     
-    // MARK: –– Same endpoint as Registration
+    @AppStorage("didCompleteOnboarding") private var didCompleteOnboarding = false
+    @AppStorage("savedUsername") private var savedUsername = ""
+    @AppStorage("savedPassword") private var savedPassword = ""
+    @AppStorage("savedFirstName") private var savedFirstName = ""
+    @AppStorage("savedLastName") private var savedLastName = ""
+    
     private let lambdaURL = "https://6qvleq3o26pgdp7jmr4aachf5y0qbkfi.lambda-url.us-east-1.on.aws/"
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Top “Sign Up” prompt
+                // Top "Sign Up" prompt
                 HStack {
                     Spacer()
                     Text("Don't have an account?")
@@ -160,32 +142,31 @@ struct LoginView: View {
                     .frame(width: 300).padding().background(Color.black).foregroundColor(.white).cornerRadius(10)
                     .disabled(isLoading)
                 
-                // ── Loading Overlay ─────────────────────────
+                // Loading Overlay
                 if isLoading {
-                    VStack {
-                        ActivityIndicator(style: .large)
-                            .frame(width: 50, height: 50)
-                            .background(Color(.systemBackground).opacity(0.8))
-                            .cornerRadius(10)
-                    }
-                    .transition(.opacity)
+                  VStack {
+                    ProgressView()
+                      .progressViewStyle(.circular)
+                      .scaleEffect(1.5)      // make it “large”
+                      .frame(width: 50, height: 50)
+                      .background(.ultraThinMaterial)
+                      .cornerRadius(10)
+                  }
+                  .transition(.opacity)
                 }
             }
             .padding()
         }
         // Routing
-        .navigationDestination(isPresented: $navigateToAlarmList) {
-            AlarmListView().environmentObject(session)
-        }
         .navigationDestination(isPresented: $navigateToSignUp) {
-            RegistrationView().environmentObject(session)
+            RegistrationView()
         }
         .navigationDestination(isPresented: $navigateToForgotPwd) {
-            ForgotPasswordView().environmentObject(session)
+            ForgotPasswordView()
         }
     }
     
-    // MARK: –– Validation
+    // MARK: - Validation
     private func validateInputs() -> Bool {
         guard !username.isEmpty, password.count >= 8 else {
             errorMessage = "Please enter a valid username and/or password"
@@ -193,18 +174,19 @@ struct LoginView: View {
         }
         return true
     }
+    
     private var isFormValid: Bool {
         !username.isEmpty && password.count >= 8
     }
     
-    // MARK: –– SHA-256 Hashing (identical to RegistrationView)
+    // MARK: - SHA-256 Hashing
     private func hashPassword(_ plain: String) -> String {
-        let data   = Data(plain.utf8)
+        let data = Data(plain.utf8)
         let digest = SHA256.hash(data: data)
         return digest.map { String(format: "%02x", $0) }.joined()
     }
     
-    // MARK: –– Network Login
+    // MARK: - Network Login
     private func loginUser() async {
         isLoading = true
         defer { isLoading = false }
@@ -218,16 +200,18 @@ struct LoginView: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let payload: [String: Any] = [
-            "userId":    username,
+            "userId": username,
             "operation": "login",
-            "password":  hashPassword(password)
+            "password": hashPassword(password)
         ]
+        
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: payload)
         } catch {
             errorMessage = "Failed to build request"
             return
         }
+        
         do {
             let (data, resp) = try await URLSession.shared.data(for: request)
             guard let httpResp = resp as? HTTPURLResponse else {
@@ -235,15 +219,17 @@ struct LoginView: View {
                 return
             }
             let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            
             if httpResp.statusCode == 200 {
-                // 1) Extract firstName/lastName from response
+                // Extract firstName/lastName from response
                 if let fn = json?["firstName"] as? String {
                     savedFirstName = fn
                 }
                 if let ln = json?["lastName"] as? String {
                     savedLastName = ln
                 }
-                // 2) Persist username / password
+                
+                // Persist username / password
                 savedUsername = username
                 savedPassword = password
                 UserDefaults.standard.set(rememberMe, forKey: "rememberMe")
@@ -256,14 +242,10 @@ struct LoginView: View {
                     service: "com.irohtechnologies.EasyWake",
                     account: username)
 
-                // 3) Mark onboarding complete
+                // Mark onboarding complete and login with session
                 didCompleteOnboarding = true
-
-                // 4) Flip the session into “logged in”
-                await MainActor.run {
-                    session.currentUser     = username
-                    session.currentPassword = password
-                }
+                await session.login(user: username, password: password)
+                
             } else {
                 if let err = json?["error"] as? String {
                     errorMessage = err

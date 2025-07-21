@@ -1,4 +1,4 @@
-// ProfileView.swift
+// ProfileView.swift - Complete Fixed Version
 
 import SwiftUI
 import CryptoKit
@@ -8,12 +8,10 @@ struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     
     var body: some View {
-        Group {
-            if !session.isLoggedIn {
-                LoginView()
-                    .environmentObject(session)
-            } else {
-                NavigationStack {
+        NavigationStack {
+            Group {
+                if session.isLoggedIn {
+                    // User is logged in - show full profile
                     Form {
                         // MARK: - Account Info Section
                         AccountInfoSection(viewModel: viewModel)
@@ -47,8 +45,6 @@ struct ProfileView: View {
                     .safeAreaInset(edge: .bottom) {
                         Color.clear.frame(height: 96)
                     }
-                    .navigationTitle("Profile")
-                    .navigationBarTitleDisplayMode(.large)
                     .toolbar {
                         if viewModel.isEditingName {
                             ToolbarItem(placement: .navigationBarTrailing) {
@@ -69,12 +65,20 @@ struct ProfileView: View {
                     .sheet(isPresented: $viewModel.showAddLocationSheet) {
                         AddLocationSheet(viewModel: viewModel)
                     }
+                } else {
+                    // User is in guest mode - show login prompt
+                    GuestModeProfileContent()
+                        .environmentObject(session)
                 }
-                .navigationBarBackButtonHidden(true)
             }
+            .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.large)
+            .navigationBarBackButtonHidden(true)
         }
         .onAppear {
-            viewModel.loadData()
+            if session.isLoggedIn {
+                viewModel.loadData()
+            }
         }
     }
 }
@@ -182,94 +186,231 @@ struct SubscriptionStatusSection: View {
 // MARK: - Address Section
 struct AddressSectionView: View {
     @ObservedObject var viewModel: ProfileViewModel
+    @State private var showDuplicateAlert = false
+    @State private var duplicateAlertMessage = ""
     
     var body: some View {
-        Section {
-            // Home Address
-            AddressRow(
-                address: viewModel.homeAddress ?? Address(label: .home, street: "", city: "", zip: "", state: "Select"),
-                onUpdate: viewModel.updateAddress
-            )
-            
-            // Work Address
-            AddressRow(
-                address: viewModel.workAddress ?? Address(label: .work, street: "", city: "", zip: "", state: "Select"),
-                onUpdate: viewModel.updateAddress
-            )
-            
-            // Add Custom Location
-            Button {
-                viewModel.showAddLocationSheet = true
-            } label: {
-                Label("Add Location", systemImage: "plus.circle.fill")
-                    .foregroundColor(.blue)
-            }
-        } header: {
-            Label("ADDRESSES", systemImage: "location")
-        }
-        
-        // Custom Locations
-        if !viewModel.customAddresses.isEmpty {
+        Group {
             Section {
-                ForEach(viewModel.customAddresses) { address in
-                    CustomLocationRow(address: address) {
-                        viewModel.deleteAddress(address)
+                // Home Address
+                NavigationLink(destination: EditAddressView(
+                    address: viewModel.homeAddress ?? Address(label: .home, street: "", city: "", zip: "", state: "Select"),
+                    onSave: { updatedAddress in
+                        handleAddressSave(updatedAddress)
                     }
+                )) {
+                    AddressRowContent(
+                        address: viewModel.homeAddress ?? Address(label: .home, street: "", city: "", zip: "", state: "Select")
+                    )
                 }
-                .onMove { source, destination in
-                    viewModel.moveAddresses(from: source, to: destination)
+                
+                // Work Address
+                NavigationLink(destination: EditAddressView(
+                    address: viewModel.workAddress ?? Address(label: .work, street: "", city: "", zip: "", state: "Select"),
+                    onSave: { updatedAddress in
+                        handleAddressSave(updatedAddress)
+                    }
+                )) {
+                    AddressRowContent(
+                        address: viewModel.workAddress ?? Address(label: .work, street: "", city: "", zip: "", state: "Select")
+                    )
+                }
+                
+                // Add Custom Location
+                NavigationLink(destination: EditAddressView(
+                    address: Address(label: .custom, street: "", city: "", zip: "", state: "Select"),
+                    onSave: { updatedAddress in
+                        handleAddressSave(updatedAddress)
+                    }
+                )) {
+                    Label("Add Location", systemImage: "plus.circle.fill")
+                        .foregroundColor(.blue)
                 }
             } header: {
-                Label("SAVED LOCATIONS", systemImage: "mappin.and.ellipse")
+                Label("ADDRESSES", systemImage: "location")
             }
+            
+            // Custom Locations
+            if !viewModel.customAddresses.isEmpty {
+                Section {
+                    ForEach(viewModel.customAddresses) { address in
+                        NavigationLink(destination: EditAddressView(
+                            address: address,
+                            onSave: { updatedAddress in
+                                handleAddressSave(updatedAddress)
+                            }
+                        )) {
+                            CustomLocationRowContent(address: address) {
+                                // Delete action
+                                viewModel.deleteAddress(address)
+                            }
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button("Delete", role: .destructive) {
+                                viewModel.deleteAddress(address)
+                            }
+                        }
+                    }
+                    .onMove { source, destination in
+                        viewModel.moveAddresses(from: source, to: destination)
+                    }
+                } header: {
+                    Label("SAVED LOCATIONS", systemImage: "mappin.and.ellipse")
+                }
+            }
+        }
+        .alert("Duplicate Address", isPresented: $showDuplicateAlert) {
+            Button("OK") { }
+        } message: {
+            Text(duplicateAlertMessage)
+        }
+    }
+    
+    private func handleAddressSave(_ updatedAddress: Address) {
+        // Check for duplicates
+        let isDuplicate = viewModel.addresses.contains { existingAddress in
+            existingAddress.id != updatedAddress.id &&
+            existingAddress.street.lowercased() == updatedAddress.street.lowercased() &&
+            existingAddress.city.lowercased() == updatedAddress.city.lowercased() &&
+            existingAddress.state == updatedAddress.state &&
+            existingAddress.zip == updatedAddress.zip
+        }
+        
+        if isDuplicate {
+            duplicateAlertMessage = "This address already exists in your saved locations."
+            showDuplicateAlert = true
+        } else {
+            viewModel.updateAddress(updatedAddress)
         }
     }
 }
 
-// MARK: - Address Row
-struct AddressRow: View {
+// MARK: - Address Row Content (for NavigationLink)
+struct AddressRowContent: View {
     let address: Address
-    let onUpdate: (Address) -> Void
-    @State private var isEditing = false
-    @State private var editingAddress: Address
     
-    init(address: Address, onUpdate: @escaping (Address) -> Void) {
-        self.address = address
-        self.onUpdate = onUpdate
+    var body: some View {
+        HStack {
+            Label(address.label.displayName, systemImage: address.label == .home ? "house.fill" : "building.2.fill")
+                .foregroundColor(address.label == .home ? .blue : .orange)
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 2) {
+                if address.isValid {
+                    Text(address.street)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    Text("\(address.city), \(address.state) \(address.zip)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                } else {
+                    Text("Tap to add \(address.label.displayName.lowercased()) address")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .italic()
+                }
+            }
+        }
+        .frame(minHeight: 44)
+    }
+}
+
+// MARK: - Custom Location Row Content
+struct CustomLocationRowContent: View {
+    let address: Address
+    let onDelete: () -> Void
+    
+    var body: some View {
+        HStack {
+            Image(systemName: address.iconName ?? "mappin.circle.fill")
+                .foregroundColor(address.iconColor ?? .green)
+                .frame(width: 25)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(address.customLabel ?? "Custom Location")
+                    .font(.body)
+                    .foregroundColor(.primary)
+                Text(address.shortDisplayAddress)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            // Delete button
+            Button(action: onDelete) {
+                Image(systemName: "trash")
+                    .foregroundColor(.red)
+                    .font(.body)
+            }
+            .buttonStyle(.plain)
+            .frame(width: 44, height: 44)
+            .accessibilityLabel("Delete address")
+            .accessibilityHint("Remove this saved location")
+        }
+    }
+}
+
+// MARK: - Edit Address View (Full Screen)
+struct EditAddressView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var editingAddress: Address
+    @State private var customLabel: String
+    
+    let onSave: (Address) -> Void
+    
+    init(address: Address, onSave: @escaping (Address) -> Void) {
         self._editingAddress = State(initialValue: address)
+        self._customLabel = State(initialValue: address.customLabel ?? "")
+        self.onSave = onSave
+    }
+    
+    private var canSave: Bool {
+        let hasValidAddress = !editingAddress.street.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                            !editingAddress.city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                            editingAddress.zip.count == 5 &&
+                            editingAddress.zip.allSatisfy(\.isNumber) &&
+                            editingAddress.state != "Select"
+        
+        if editingAddress.label == .custom {
+            return hasValidAddress && !customLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        
+        return hasValidAddress
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Label(address.label.displayName, systemImage: address.label == .home ? "house.fill" : "building.2.fill")
-                    .foregroundColor(address.label == .home ? .blue : .orange)
-                
-                Spacer()
-                
-                Button {
-                    editingAddress = address
-                    isEditing.toggle()
-                } label: {
-                    Image(systemName: "pencil")
-                        .foregroundColor(.blue)
+        Form {
+            if editingAddress.label == .custom {
+                Section {
+                    TextField("Location Name (e.g., Gym, Office)", text: $customLabel)
+                        .frame(minHeight: 44)
+                } header: {
+                    Text("Label")
+                } footer: {
+                    Text("Give this address a memorable name")
                 }
             }
             
-            if isEditing {
-                VStack(spacing: 12) {
-                    TextField("Street Address", text: $editingAddress.street)
-                        .textFieldStyle(.roundedBorder)
-                    
-                    HStack {
-                        TextField("City", text: $editingAddress.city)
-                            .textFieldStyle(.roundedBorder)
-                        
-                        TextField("ZIP", text: $editingAddress.zip)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.numberPad)
-                            .frame(maxWidth: 80)
-                    }
+            Section("Address") {
+                TextField("Street Address", text: $editingAddress.street)
+                    .frame(minHeight: 44)
+                TextField("City", text: $editingAddress.city)
+                    .frame(minHeight: 44)
+                
+                HStack {
+                    TextField("ZIP Code", text: $editingAddress.zip)
+                        .keyboardType(.numberPad)
+                        .frame(minHeight: 44)
+                        .onChange(of: editingAddress.zip) { _, newValue in
+                            if newValue.count > 5 {
+                                editingAddress.zip = String(newValue.prefix(5))
+                            }
+                        }
                     
                     Picker("State", selection: $editingAddress.state) {
                         ForEach(states, id: \.self) { state in
@@ -277,36 +418,24 @@ struct AddressRow: View {
                         }
                     }
                     .pickerStyle(.menu)
-                    
-                    HStack {
-                        Button("Cancel") {
-                            editingAddress = address
-                            isEditing = false
-                        }
-                        .foregroundColor(.red)
-                        
-                        Spacer()
-                        
-                        Button("Save") {
-                            onUpdate(editingAddress)
-                            isEditing = false
-                        }
-                        .disabled(!editingAddress.isValid)
-                        .foregroundColor(.blue)
+                    .frame(minHeight: 44)
+                }
+            }
+        }
+        .navigationTitle(editingAddress.label == .custom ? "Edit Location" : "Edit \(editingAddress.label.displayName) Address")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(false)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Save") {
+                    var addressToSave = editingAddress
+                    if addressToSave.label == .custom {
+                        addressToSave.customLabel = customLabel
                     }
-                    .font(.subheadline)
+                    onSave(addressToSave)
+                    dismiss()
                 }
-            } else {
-                if address.isValid {
-                    Text(address.displayAddress)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                } else {
-                    Text("Tap to add \(address.label.displayName.lowercased()) address")
-                      .font(.subheadline)
-                      .foregroundStyle(.tertiary)    // accepts ShapeStyle
-                      .italic()
-                }
+                .disabled(!canSave)
             }
         }
     }
@@ -317,38 +446,6 @@ struct AddressRow: View {
         "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA",
         "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"
     ]
-}
-
-// MARK: - Custom Location Row
-struct CustomLocationRow: View {
-    let address: Address
-    let onDelete: () -> Void
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(address.customLabel ?? "Custom Location")
-                    .font(.body)
-                Text(address.shortDisplayAddress)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            Button {
-                onDelete()
-            } label: {
-                Image(systemName: "trash")
-                    .foregroundColor(.red)
-            }
-        }
-        .swipeActions(edge: .trailing) {
-            Button("Delete", role: .destructive) {
-                onDelete()
-            }
-        }
-    }
 }
 
 // MARK: - Commute Preferences Section
@@ -383,7 +480,7 @@ struct CommutePreferencesSection: View {
                 HStack {
                     Text("Commute Buffer")
                     Spacer()
-                    Text("\(viewModel.preferences.commuteBuffer) min")
+                    Text(bufferText(from: viewModel.preferences.commuteBuffer))
                         .foregroundColor(.secondary)
                         .monospacedDigit()
                 }
@@ -393,7 +490,7 @@ struct CommutePreferencesSection: View {
                         get: { Double(viewModel.preferences.commuteBuffer) },
                         set: { viewModel.preferences.commuteBuffer = Int($0) }
                     ),
-                    in: 0...60,
+                    in: 0...360,
                     step: 5
                 ) {
                     Text("Buffer Time")
@@ -401,7 +498,7 @@ struct CommutePreferencesSection: View {
                     Text("0")
                         .font(.caption)
                 } maximumValueLabel: {
-                    Text("60")
+                    Text("6h")
                         .font(.caption)
                 }
                 .onChange(of: viewModel.preferences.commuteBuffer) { _, _ in
@@ -429,6 +526,20 @@ struct CommutePreferencesSection: View {
             Label("ALARM & COMMUTE", systemImage: "alarm")
         } footer: {
             Text("Add extra time to your commute and control snooze behavior.")
+        }
+    }
+    
+    private func bufferText(from totalMinutes: Int) -> String {
+        let hours   = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        switch (hours, minutes) {
+        case (0, let m):
+            return "\(m)m"
+        case (let h, 0):
+            return "\(h)h"
+        default:
+            return "\(hours)h \(minutes)m"
         }
     }
 }
@@ -625,8 +736,7 @@ struct AccountActionsSection: View {
         Section {
             Button("Log Out", role: .destructive) {
                 viewModel.logout()
-                session.currentUser = nil
-                session.currentPassword = nil
+                session.logout()
             }
         }
     }
@@ -639,6 +749,7 @@ struct AddLocationSheet: View {
     
     @State private var customLabel = ""
     @State private var newAddress = Address(label: .custom, street: "", city: "", zip: "", state: "Select")
+    @State private var showDuplicateAlert = false
     
     var body: some View {
         NavigationStack {
@@ -651,6 +762,11 @@ struct AddLocationSheet: View {
                     HStack {
                         TextField("ZIP Code", text: $newAddress.zip)
                             .keyboardType(.numberPad)
+                            .onChange(of: newAddress.zip) { _, newValue in
+                                if newValue.count > 5 {
+                                    newAddress.zip = String(newValue.prefix(5))
+                                }
+                            }
                         
                         Picker("State", selection: $newAddress.state) {
                             ForEach(states, id: \.self) { state in
@@ -674,13 +790,30 @@ struct AddLocationSheet: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        var addressToSave = newAddress
-                        addressToSave.customLabel = customLabel
-                        viewModel.addCustomLocation(addressToSave)
-                        dismiss()
+                        // Check for duplicates
+                        let isDuplicate = viewModel.addresses.contains { existingAddress in
+                            existingAddress.street.lowercased() == newAddress.street.lowercased() &&
+                            existingAddress.city.lowercased() == newAddress.city.lowercased() &&
+                            existingAddress.state == newAddress.state &&
+                            existingAddress.zip == newAddress.zip
+                        }
+                        
+                        if isDuplicate {
+                            showDuplicateAlert = true
+                        } else {
+                            var addressToSave = newAddress
+                            addressToSave.customLabel = customLabel
+                            viewModel.addCustomLocation(addressToSave)
+                            dismiss()
+                        }
                     }
                     .disabled(!canSave)
                 }
+            }
+            .alert("Duplicate Address", isPresented: $showDuplicateAlert) {
+                Button("OK") { }
+            } message: {
+                Text("This address already exists in your saved locations.")
             }
         }
     }
@@ -699,7 +832,7 @@ struct AddLocationSheet: View {
     ]
 }
 
-// MARK: - Supporting Views (Stubs)
+// MARK: - Supporting Views
 struct ReferralView: View {
     var body: some View {
         Text("Referral Program")

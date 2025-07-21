@@ -1,4 +1,4 @@
-// WeatherSettingsView.swift
+// WeatherSettingsView.swift - Fixed Version
 
 import SwiftUI
 import CoreLocation
@@ -303,11 +303,8 @@ struct WeatherSettingView: View {
                         .foregroundColor(.secondary)
                 }
             }
-            // SOLUTION: Add padding to keep content above bottom nav bar
             .safeAreaInset(edge: .bottom) {
-                // This creates space for your bottom nav bar
-                // Adjust the height to match your bottom nav bar height
-                Color.clear.frame(height: 96) // 44 (nav height) + 12 (top padding) + 40 (bottom padding)
+                Color.clear.frame(height: 96)
             }
             .navigationTitle("Weather Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -329,7 +326,6 @@ struct WeatherSettingView: View {
                 Text("This will reset all buffer times to their default values.")
             }
             .sheet(isPresented: $showAddLocation) {
-                // This would present a location picker similar to WeatherView
                 Text("Location Picker")
                     .presentationDetents([.medium])
             }

@@ -1,24 +1,22 @@
-// RegistrationView.swift
+// RegistrationView.swift - Fixed with Skip Warning
 import SwiftUI
-import CryptoKit   // ← for SHA-256
+import CryptoKit
 
 struct RegistrationView: View {
-    // MARK: –– Session
     @EnvironmentObject var session: SessionManager
-
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var errorMessage = ""
+    @State private var showSkipWarning = false
     
     @State private var navigateToLogin = false
     @State private var navigateToUserSettings = false
-    @State private var navigateToAlarmList = false
     @AppStorage("didCompleteOnboarding") private var didCompleteOnboarding = false
-    @AppStorage("savedUsername")     private var savedUsername = ""
-    @AppStorage("savedPassword")     private var savedPassword = ""
+    @AppStorage("savedUsername") private var savedUsername = ""
+    @AppStorage("savedPassword") private var savedPassword = ""
     @AppStorage("savedFirstName") private var savedFirstName = ""
-    @AppStorage("savedLastName")  private var savedLastName  = ""
+    @AppStorage("savedLastName") private var savedLastName = ""
     
     private let lambdaURL = "https://6qvleq3o26pgdp7jmr4aachf5y0qbkfi.lambda-url.us-east-1.on.aws/"
 
@@ -132,16 +130,9 @@ struct RegistrationView: View {
                         .cornerRadius(10)
                     }
 
-                    // “Skip for now” button
+                    // "Skip for now" button - UPDATED
                     Button("Skip for now") {
-                        Task {
-                            await MainActor.run {
-                                session.currentUser     = ""
-                                session.currentPassword = ""
-                            }
-                        }
-                        didCompleteOnboarding = true
-                        navigateToAlarmList = true
+                        showSkipWarning = true
                     }
                     .frame(maxWidth: 300)
                     .padding()
@@ -158,19 +149,23 @@ struct RegistrationView: View {
             .padding()
         }
         .navigationBarBackButtonHidden(true)
-        // MARK: Navigation
         .navigationDestination(isPresented: $navigateToLogin) {
-            LoginView().environmentObject(session)
+            LoginView()
         }
         .navigationDestination(isPresented: $navigateToUserSettings) {
-            UserSettingsView(origin: .onboarding).environmentObject(session)
+            UserSettingsView(origin: .onboarding)
         }
-        .navigationDestination(isPresented: $navigateToAlarmList) {
-            AlarmListView().environmentObject(session)
+        .alert("Continue as Guest?", isPresented: $showSkipWarning) {
+            Button("Cancel", role: .cancel) { }
+            Button("Continue as Guest") {
+                session.skipLogin()
+            }
+        } message: {
+            Text("⚠️ No user profile information will be saved and you will not have access to premium features like weather-adjusted alarms, saved addresses, and cloud sync.")
         }
     }
 
-    // MARK: –– Validation Logic
+    // MARK: - Validation Logic
     private func validateInputs() -> Bool {
         guard isValidEmail(email) else {
             errorMessage = "Please enter a valid email address"
@@ -200,20 +195,17 @@ struct RegistrationView: View {
     }
 
     private func isValidPassword(_ s: String) -> Bool {
-        // 8–30 chars, at least one letter, one digit, one special char
         let pattern = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@#$%&!\\-_<>])[A-Za-z\\d@#$%&!\\-_<>]{8,30}$"
         return NSPredicate(format: "SELF MATCHES %@", pattern)
             .evaluate(with: s)
     }
 
-    // MARK: –– Hashing (SHA-256)
     private func hashPassword(_ plain: String) -> String {
         let data = Data(plain.utf8)
         let digest = SHA256.hash(data: data)
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 
-    // MARK: –– Networking
     private func createUser() async {
         guard let url = URL(string: lambdaURL) else {
             errorMessage = "Invalid server URL"
@@ -221,34 +213,27 @@ struct RegistrationView: View {
         }
         
         let nameOptions = [
-                    "Newbie Nick",
-                    "Novice Nancy",
-                    "Willie Makeit",
-                    "Fresh Face Frank",
-                    "Rookie Rex",
-                    "Just Joined Jessie",
-                    "Just Joined Jesse",
-                    "Data Dave"
-                ]
+            "Newbie Nick", "Novice Nancy", "Willie Makeit", "Fresh Face Frank",
+            "Rookie Rex", "Just Joined Jessie", "Just Joined Jesse", "Data Dave"
+        ]
         let chosen = nameOptions.randomElement()!
-        let parts  = chosen.split(separator: " ")
-        let first  = parts.dropLast().joined(separator: " ")
-        let last   = "\(parts.last!)\(Int.random(in: 1...10_000_000))"
+        let parts = chosen.split(separator: " ")
+        let first = parts.dropLast().joined(separator: " ")
+        let last = "\(parts.last!)\(Int.random(in: 1...10_000_000))"
 
-        // Save into AppStorage so ProfileView can pick it up later
         savedFirstName = first
-        savedLastName  = last
+        savedLastName = last
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let payload: [String: Any] = [
-            "userId":    email,
+            "userId": email,
             "operation": "create",
-            "password":  hashPassword(password),
+            "password": hashPassword(password),
             "firstName": first,
-            "lastName":  last
+            "lastName": last
         ]
 
         do {
@@ -271,21 +256,15 @@ struct RegistrationView: View {
                 savedUsername = email
                 savedPassword = password
                 
-                // persist raw password securely in Keychain
                 let pwdData = Data(password.utf8)
                 KeychainHelper.standard.save(pwdData,
                     service: "com.irohtechnologies.EasyWake",
                     account: email)
                 
-                await MainActor.run {
-                    session.currentUser     = email
-                    session.currentPassword = password
-                }
-                
+                await session.completeRegistration(user: email, password: password)
                 didCompleteOnboarding = true
                 navigateToUserSettings = true
             } else {
-                // surface the Lambda’s error message if present
                 if let err = json?["error"] as? String {
                     errorMessage = err
                 } else {
@@ -300,6 +279,7 @@ struct RegistrationView: View {
 
 #Preview {
     NavigationStack {
-        RegistrationView().environmentObject(SessionManager())
+        RegistrationView()
+            .environmentObject(SessionManager())
     }
 }

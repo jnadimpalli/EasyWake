@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		697B991C2E26A9E900CF3BE3 /* WeatherKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 697B991B2E26A9E900CF3BE3 /* WeatherKit.framework */; };
+		697B991F2E26A9FA00CF3BE3 /* CoreLocationUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 697B991D2E26A9FA00CF3BE3 /* CoreLocationUI.framework */; platformFilter = ios; };
+		697B99202E26A9FA00CF3BE3 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 697B991E2E26A9FA00CF3BE3 /* CoreLocation.framework */; };
+		697B99232E26AA0700CF3BE3 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 697B99212E26AA0700CF3BE3 /* UserNotifications.framework */; };
+		697B99242E26AA0700CF3BE3 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 697B99222E26AA0700CF3BE3 /* UserNotificationsUI.framework */; };
+		69D9DFEE2E2DE07F00C6520E /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 69D9DFED2E2DE07F00C6520E /* MapKit.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		697B98262E1EFA1600CF3BE3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +36,12 @@
 		697B98172E1EFA1400CF3BE3 /* EasyWake.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EasyWake.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		697B98252E1EFA1600CF3BE3 /* EasyWakeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EasyWakeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		697B982F2E1EFA1600CF3BE3 /* EasyWakeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EasyWakeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		697B991B2E26A9E900CF3BE3 /* WeatherKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WeatherKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/WeatherKit.framework; sourceTree = DEVELOPER_DIR; };
+		697B991D2E26A9FA00CF3BE3 /* CoreLocationUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocationUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/CoreLocationUI.framework; sourceTree = DEVELOPER_DIR; };
+		697B991E2E26A9FA00CF3BE3 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/CoreLocation.framework; sourceTree = DEVELOPER_DIR; };
+		697B99212E26AA0700CF3BE3 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/UserNotifications.framework; sourceTree = DEVELOPER_DIR; };
+		697B99222E26AA0700CF3BE3 /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = DEVELOPER_DIR; };
+		69D9DFED2E2DE07F00C6520E /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/MapKit.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -65,6 +80,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				697B99242E26AA0700CF3BE3 /* UserNotificationsUI.framework in Frameworks */,
+				697B99232E26AA0700CF3BE3 /* UserNotifications.framework in Frameworks */,
+				697B99202E26A9FA00CF3BE3 /* CoreLocation.framework in Frameworks */,
+				697B991F2E26A9FA00CF3BE3 /* CoreLocationUI.framework in Frameworks */,
+				69D9DFEE2E2DE07F00C6520E /* MapKit.framework in Frameworks */,
+				697B991C2E26A9E900CF3BE3 /* WeatherKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,6 +112,7 @@
 				697B98192E1EFA1400CF3BE3 /* EasyWake */,
 				697B98282E1EFA1600CF3BE3 /* EasyWakeTests */,
 				697B98322E1EFA1600CF3BE3 /* EasyWakeUITests */,
+				697B991A2E26A9E900CF3BE3 /* Frameworks */,
 				697B98182E1EFA1400CF3BE3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -103,6 +125,19 @@
 				697B982F2E1EFA1600CF3BE3 /* EasyWakeUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		697B991A2E26A9E900CF3BE3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				69D9DFED2E2DE07F00C6520E /* MapKit.framework */,
+				697B99212E26AA0700CF3BE3 /* UserNotifications.framework */,
+				697B99222E26AA0700CF3BE3 /* UserNotificationsUI.framework */,
+				697B991E2E26A9FA00CF3BE3 /* CoreLocation.framework */,
+				697B991D2E26A9FA00CF3BE3 /* CoreLocationUI.framework */,
+				697B991B2E26A9E900CF3BE3 /* WeatherKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -427,7 +462,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
@@ -474,7 +509,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;

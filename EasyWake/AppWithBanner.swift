@@ -41,11 +41,9 @@ struct AppWithBanner<Content: View>: View {
             }
         }
         .onChange(of: networkMonitor.isConnected) { oldValue, newValue in
-            print("AppWithBanner: Network state changed from \(oldValue) to \(newValue)")
             bannerManager.handleNetworkChange(isConnected: newValue)
         }
         .onAppear {
-            print("AppWithBanner: onAppear - initial connection state: \(networkMonitor.isConnected)")
             bannerManager.handleNetworkChange(isConnected: networkMonitor.isConnected)
         }
     }

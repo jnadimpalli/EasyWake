@@ -1,5 +1,4 @@
 // ViewModels/ProfileViewModel.swift
-
 import SwiftUI
 import CryptoKit
 import Combine
@@ -90,12 +89,18 @@ class ProfileViewModel: ObservableObject {
         // Load addresses
         if let decoded = try? JSONDecoder().decode([Address].self, from: storedAddresses) {
             addresses = decoded
-        } else {
-            // Initialize with empty home and work addresses
-            addresses = [
-                Address(label: .home, street: "", city: "", zip: "", state: "Select"),
-                Address(label: .work, street: "", city: "", zip: "", state: "Select")
-            ]
+        }
+        
+        // Ensure we always have home and work addresses with proper structure
+        if !addresses.contains(where: { $0.label == .home }) {
+            let homeAddress = Address(label: .home, street: "", city: "", zip: "", state: "Select")
+            addresses.insert(homeAddress, at: 0)
+        }
+        
+        if !addresses.contains(where: { $0.label == .work }) {
+            let workAddress = Address(label: .work, street: "", city: "", zip: "", state: "Select")
+            let homeIndex = addresses.firstIndex(where: { $0.label == .home }) ?? -1
+            addresses.insert(workAddress, at: homeIndex + 1)
         }
         
         // Load preferences
@@ -200,10 +205,27 @@ class ProfileViewModel: ObservableObject {
     
     // MARK: - Address Management
     func updateAddress(_ address: Address) {
-        if let index = addresses.firstIndex(where: { $0.id == address.id }) {
-            addresses[index] = address
+        // For home and work addresses, find by label instead of ID
+        if address.label == .home {
+            if let index = addresses.firstIndex(where: { $0.label == .home }) {
+                addresses[index] = address
+            } else {
+                addresses.insert(address, at: 0)
+            }
+        } else if address.label == .work {
+            if let index = addresses.firstIndex(where: { $0.label == .work }) {
+                addresses[index] = address
+            } else {
+                let homeIndex = addresses.firstIndex(where: { $0.label == .home }) ?? -1
+                addresses.insert(address, at: homeIndex + 1)
+            }
         } else {
-            addresses.append(address)
+            // For custom addresses, find by ID
+            if let index = addresses.firstIndex(where: { $0.id == address.id }) {
+                addresses[index] = address
+            } else {
+                addresses.append(address)
+            }
         }
         saveData()
     }

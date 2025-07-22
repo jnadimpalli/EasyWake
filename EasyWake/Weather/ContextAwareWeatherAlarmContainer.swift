@@ -112,7 +112,7 @@ struct AnalyzingLocationView: View {
         HStack(spacing: 12) {
             Image(systemName: "location.magnifyingglass")
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundColor(.customBlue)
                 .rotationEffect(.degrees(rotationAngle))
                 .onAppear {
                     withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
@@ -140,7 +140,7 @@ struct AnalyzingLocationView: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.customBlue.opacity(0.3), lineWidth: 1)
                 )
         )
         .padding(.horizontal, 16)
@@ -310,7 +310,7 @@ struct RelevanceCard: View {
     // MARK: - Helpers
     private var iconColor: Color {
         switch relevance.relevanceType {
-        case .nearStart:        return .blue
+        case .nearStart:        return .customBlue
         case .nearDestination:  return .green
         case .alongRoute:       return .orange
         case .weatherImpact:    return .purple
@@ -352,7 +352,7 @@ struct MultipleAlarmsIndicator: View {
                 
                 Text("View all")
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                     .fontWeight(.medium)
             }
             .padding(.horizontal, 12)
@@ -395,10 +395,10 @@ struct LocationAnalysisErrorView: View {
             
             Button("Retry", action: onRetry)
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundColor(.customBlue)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color.blue.opacity(0.1))
+                .background(Color.customBlue.opacity(0.1))
                 .cornerRadius(8)
         }
         .padding(.horizontal, 16)
@@ -506,7 +506,7 @@ struct DetailedRelevanceRow: View {
                     icon: "location.fill",
                     title: "Distance",
                     value: distanceText,
-                    color: .blue
+                    color: .customBlue
                 )
                 
                 DetailRow(
@@ -548,7 +548,7 @@ struct DetailedRelevanceRow: View {
     
     private var iconColor: Color {
         switch relevance.relevanceType {
-        case .nearStart: return .blue
+        case .nearStart: return .customBlue
         case .nearDestination: return .green
         case .alongRoute: return .orange
         case .weatherImpact: return .purple

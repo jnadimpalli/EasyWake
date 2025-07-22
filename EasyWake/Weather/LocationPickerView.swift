@@ -37,7 +37,7 @@ struct LocationPickerView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                     .font(.system(size: 16, weight: .medium))
                 }
                 
@@ -47,7 +47,7 @@ struct LocationPickerView: View {
                         Button("Clear") {
                             clearSearch()
                         }
-                        .foregroundColor(.blue)
+                        .foregroundColor(.customBlue)
                         .font(.system(size: 16))
                     }
                 }
@@ -463,7 +463,7 @@ struct ErrorBanner: View {
             
             Button("Retry", action: onRetry)
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundColor(.customBlue)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

@@ -51,7 +51,7 @@ struct AddressSelectorSheet: View {
                     AddressSelectorRowView(
                         address: homeAddress,
                         icon: "house.fill",
-                        iconColor: .blue
+                        iconColor: .customBlue
                     ) {
                         viewModel.selectSavedAddress(homeAddress, for: viewModel.selectedAddressType!)
                         dismiss()
@@ -94,7 +94,7 @@ struct AddressSelectorSheet: View {
                     } label: {
                         HStack {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.customBlue)
                             Text("Add New Address")
                             Spacer()
                         }

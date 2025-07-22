@@ -115,7 +115,7 @@ struct AccountInfoSection: View {
                     viewModel.isEditingName.toggle()
                 } label: {
                     Image(systemName: viewModel.isEditingName ? "xmark.circle.fill" : "pencil")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.customBlue)
                 }
             }
             
@@ -224,7 +224,7 @@ struct AddressSectionView: View {
                     }
                 )) {
                     Label("Add Location", systemImage: "plus.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.customBlue)
                 }
             } header: {
                 Label("ADDRESSES", systemImage: "location")
@@ -292,7 +292,7 @@ struct AddressRowContent: View {
     var body: some View {
         HStack {
             Label(address.label.displayName, systemImage: address.label == .home ? "house.fill" : "building.2.fill")
-                .foregroundColor(address.label == .home ? .blue : .orange)
+                .foregroundColor(address.label == .home ? .customBlue : .orange)
             
             Spacer()
             

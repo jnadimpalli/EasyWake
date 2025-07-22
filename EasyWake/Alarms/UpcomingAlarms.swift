@@ -387,6 +387,7 @@ struct UpcomingAlarmsCarousel: View {
 struct UpcomingAlarmsContainer: View {
     @EnvironmentObject var alarmStore: AlarmStore
     @State private var showingAlarmDetail: Alarm?
+    @State private var showingBreakdownSheet: BreakdownSheetItem?
     @State private var selectedTimeFrame: TimeFrame = .twentyFourHours
     @AppStorage("upcomingAlarmsTimeFrame") private var savedTimeFrame: String = "24h"
     
@@ -418,6 +419,7 @@ struct UpcomingAlarmsContainer: View {
         }
     }
     
+    // MARK: - Computed Properties
     private var upcomingAlarms: [UpcomingAlarmInfo] {
         let now = Date()
         let timeFrameEnd = now.addingTimeInterval(selectedTimeFrame.hours * 60 * 60)
@@ -444,88 +446,138 @@ struct UpcomingAlarmsContainer: View {
         .sorted { $0.scheduledTime < $1.scheduledTime }
     }
     
+    private var shouldShowSection: Bool {
+        !upcomingAlarms.isEmpty || selectedTimeFrame != .twentyFourHours
+    }
+    
     var body: some View {
         Group {
-            if !upcomingAlarms.isEmpty || selectedTimeFrame != .twentyFourHours {
-                VStack(spacing: 16) {
-                    // Section Header with Segmented Control
-                    VStack(spacing: 12) {
-                        HStack {
-                            Text("Upcoming Alarms")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                            
-                            Menu {
-                                ForEach(TimeFrame.allCases.reversed(), id: \.self) { timeFrame in
-                                    Button {
-                                        selectedTimeFrame = timeFrame
-                                        // Reset dismissed alarms when changing time frame
-                                        sessionDismissedAlarmIds.removeAll()
-                                    } label: {
-                                        if selectedTimeFrame == timeFrame {
-                                            Label("Next \(timeFrame.displayText)", systemImage: "checkmark")
-                                        } else {
-                                            Text("Next \(timeFrame.displayText)")
-                                        }
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Text("Next \(selectedTimeFrame.displayText)")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Image(systemName: "chevron.down")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                    }
-                    
-                    // Alarm Cards or Empty State
-                    if upcomingAlarms.isEmpty {
-                        EmptyUpcomingAlarmsView(timeFrame: selectedTimeFrame)
-                            .padding(.horizontal, 16)
-                    } else {
-                        UpcomingAlarmsCarousel(
-                            upcomingAlarms: upcomingAlarms,
-                            onCardTap: { alarmInfo in
-                                showingAlarmDetail = alarmInfo.alarm
-                            },
-                            onCardDismiss: { alarmInfo in
-                                dismissUpcomingAlarm(alarmInfo.alarm.id)
-                            }
-                        )
-                    }
-                }
-                .padding(.bottom, 8)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .onAppear {
-                    // Load saved preference
-                    if let saved = TimeFrame(rawValue: savedTimeFrame) {
-                        selectedTimeFrame = saved
-                    }
-                }
+            if shouldShowSection {
+                mainContent
             }
         }
+        .sheet(item: $showingBreakdownSheet) { item in
+            AlarmBreakdownSheet(alarm: item.alarm, adjustment: item.adjustment)
+        }
         .fullScreenCover(item: $showingAlarmDetail) { alarm in
-            AddAlarmView(
-                alarm: alarm,
-                onSave: { updatedAlarm in
-                    showingAlarmDetail = nil
-                },
-                onCancel: {
-                    showingAlarmDetail = nil
-                },
-                onDelete: { deletedAlarm in
-                    showingAlarmDetail = nil
+            addAlarmView(for: alarm)
+        }
+    }
+    
+    // MARK: - Subviews
+    private var mainContent: some View {
+        VStack(spacing: 16) {
+            sectionHeader
+            alarmContent
+        }
+        .padding(.bottom, 8)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .onAppear {
+            loadSavedTimeFrame()
+        }
+    }
+    
+    private var sectionHeader: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Upcoming Alarms")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                timeFrameMenu
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+    
+    private var timeFrameMenu: some View {
+        Menu {
+            ForEach(TimeFrame.allCases.reversed(), id: \.self) { timeFrame in
+                Button {
+                    handleTimeFrameChange(timeFrame)
+                } label: {
+                    timeFrameMenuLabel(for: timeFrame)
                 }
+            }
+        } label: {
+            currentTimeFrameLabel
+        }
+    }
+    
+    @ViewBuilder
+    private func timeFrameMenuLabel(for timeFrame: TimeFrame) -> some View {
+        if selectedTimeFrame == timeFrame {
+            Label("Next \(timeFrame.displayText)", systemImage: "checkmark")
+        } else {
+            Text("Next \(timeFrame.displayText)")
+        }
+    }
+    
+    private var currentTimeFrameLabel: some View {
+        HStack(spacing: 4) {
+            Text("Next \(selectedTimeFrame.displayText)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Image(systemName: "chevron.down")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    @ViewBuilder
+    private var alarmContent: some View {
+        if upcomingAlarms.isEmpty {
+            EmptyUpcomingAlarmsView(timeFrame: selectedTimeFrame)
+                .padding(.horizontal, 16)
+        } else {
+            UpcomingAlarmsCarousel(
+                upcomingAlarms: upcomingAlarms,
+                onCardTap: handleCardTap,
+                onCardDismiss: handleCardDismiss
             )
         }
+    }
+    
+    // MARK: - Helper Methods
+    private func addAlarmView(for alarm: Alarm) -> some View {
+        AddAlarmView(
+            alarm: alarm,
+            onSave: { _ in
+                showingAlarmDetail = nil
+            },
+            onCancel: {
+                showingAlarmDetail = nil
+            },
+            onDelete: { _ in
+                showingAlarmDetail = nil
+            }
+        )
+    }
+    
+    // MARK: - Action Handlers
+    private func handleTimeFrameChange(_ timeFrame: TimeFrame) {
+        selectedTimeFrame = timeFrame
+        savedTimeFrame = timeFrame.rawValue
+        // Reset dismissed alarms when changing time frame
+        sessionDismissedAlarmIds.removeAll()
+    }
+    
+    private func handleCardTap(_ alarmInfo: UpcomingAlarmInfo) {
+        if alarmInfo.isAdjusted {
+            showingBreakdownSheet = BreakdownSheetItem(
+                alarm: alarmInfo.alarm,
+                adjustment: alarmInfo.adjustment
+            )
+        } else {
+            showingAlarmDetail = alarmInfo.alarm
+        }
+    }
+    
+    private func handleCardDismiss(_ alarmInfo: UpcomingAlarmInfo) {
+        dismissUpcomingAlarm(alarmInfo.alarm.id)
     }
     
     private func dismissUpcomingAlarm(_ alarmId: UUID) {
@@ -536,6 +588,12 @@ struct UpcomingAlarmsContainer: View {
         // Haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
+    }
+    
+    private func loadSavedTimeFrame() {
+        if let saved = TimeFrame(rawValue: savedTimeFrame) {
+            selectedTimeFrame = saved
+        }
     }
 }
 

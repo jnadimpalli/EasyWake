@@ -51,10 +51,10 @@ struct WeatherView: View {
                                     weatherViewModel: viewModel
                                 )
                                 
-                                // Weather Alerts - These will now have proper spacing from alarm cards
-                                WeatherAlertsContainer(alertManager: viewModel.alertManager)
-                                    .transition(.scale.combined(with: .opacity))
-                                
+//                                // Weather Alerts - These will now have proper spacing from alarm cards
+//                                WeatherAlertsContainer(alertManager: viewModel.alertManager)
+//                                    .transition(.scale.combined(with: .opacity))
+//                                
                                 // Hourly Forecast
                                 if !viewModel.hourlyForecast.isEmpty {
                                     hourlyForecastView
@@ -99,12 +99,6 @@ struct WeatherView: View {
         .onAppear {
             // Update route analysis service with the actual alarm store
             updateRouteAnalysisService()
-            
-            // Trigger Lambda calculation when weather view appears
-//            Task {
-//                print("[WEATHER-VIEW] View appeared, triggering Lambda calculation")
-//                await weatherAlarmService.calculateWeatherAdjustmentsWithLambda()
-//            }
         }
     }
     
@@ -675,4 +669,6 @@ struct WeatherViewWithDependencies: View {
 // MARK: - Preview
 #Preview {
     WeatherView()
+        .environmentObject(AlarmStore())
+        .environmentObject(DataCoordinator(alarmStore: AlarmStore(), profileViewModel: ProfileViewModel()))
 }

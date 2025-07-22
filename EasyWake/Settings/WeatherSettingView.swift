@@ -215,7 +215,7 @@ struct WeatherSettingView: View {
                     Toggle(isOn: $viewModel.useWeatherToAdjust) {
                         HStack {
                             Image(systemName: "alarm")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.customBlue)
                                 .frame(width: 30)
                             
                             VStack(alignment: .leading, spacing: 2) {
@@ -251,7 +251,7 @@ struct WeatherSettingView: View {
                                             Text("Reset to Defaults")
                                         }
                                         .font(.footnote)
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.customBlue)
                                     }
                                     .frame(maxWidth: .infinity)
                                     .padding(.top, 8)
@@ -383,7 +383,7 @@ struct LocationRow: View {
     var body: some View {
         HStack {
             Image(systemName: location.isCurrentLocation ? "location.fill" : "mappin.circle.fill")
-                .foregroundColor(location.isCurrentLocation ? .blue : .secondary)
+                .foregroundColor(location.isCurrentLocation ? .customBlue : .secondary)
                 .frame(width: 25)
             
             VStack(alignment: .leading, spacing: 2) {

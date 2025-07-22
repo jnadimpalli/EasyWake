@@ -18,7 +18,7 @@ struct PreparationTimeSection: View {
                         viewModel.loadProfileDefault()
                     }
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
                 Text("How long it takes to get ready")
                     .font(.caption)
@@ -114,7 +114,7 @@ struct EnhancedAddressSection: View {
                 } label: {
                     HStack {
                         Image(systemName: "location.circle.fill")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.customBlue)
                         Text("Select Saved Address")
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -238,7 +238,7 @@ struct EnhancedAddressFieldsView: View {
                         onAddressComplete(currentAddress)
                     }
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
                 .padding(.top, 4)
             } else if isValidating {
@@ -478,7 +478,7 @@ struct SmartAlarmSections: View {
                 } label: {
                     HStack {
                         Image(systemName: "arrow.up.arrow.down")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.customBlue)
                         Text("Swap Starting and Destination")
                         Spacer()
                     }

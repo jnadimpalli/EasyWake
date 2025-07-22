@@ -34,7 +34,7 @@ struct LoginView: View {
                         navigateToSignUp = true
                     }
                     .font(.footnote)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
                 .padding(.top, 8)
                 .padding(.trailing, 10)
@@ -89,7 +89,7 @@ struct LoginView: View {
                         }
                     }) {
                         Image(systemName: rememberMe ? "checkmark.square" : "square")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.customBlue)
                         Text("Remember Me")
                     }
 
@@ -99,7 +99,7 @@ struct LoginView: View {
                         navigateToForgotPwd = true
                     }
                     .font(.footnote)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
                 .frame(maxWidth: 400)
 
@@ -112,11 +112,11 @@ struct LoginView: View {
                     Text("Sign In")
                         .frame(width: 300)
                         .padding()
-                        .background(isFormValid ? Color.blue : Color.white)
-                        .foregroundColor(isFormValid ? .white : .blue)
+                        .background(isFormValid ? Color.customBlue : Color.white)
+                        .foregroundColor(isFormValid ? .white : .customBlue)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue, lineWidth: isFormValid ? 0 : 2)
+                                .stroke(Color.customBlue, lineWidth: isFormValid ? 0 : 2)
                         )
                         .cornerRadius(10)
                 }

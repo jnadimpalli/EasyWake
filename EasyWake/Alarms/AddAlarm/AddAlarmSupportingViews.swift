@@ -43,7 +43,7 @@ struct InfoButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: "info.circle")
-                .foregroundColor(.blue)
+                .foregroundColor(.customBlue)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }

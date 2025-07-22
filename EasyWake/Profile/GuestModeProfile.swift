@@ -37,7 +37,7 @@ struct GuestModeProfileContent: View {
                     Text("Login to Existing Account")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.customBlue)
                         .foregroundColor(.white)
                         .cornerRadius(12)
                 }
@@ -51,11 +51,11 @@ struct GuestModeProfileContent: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.white)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.customBlue)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.blue, lineWidth: 2)
+                                .stroke(Color.customBlue, lineWidth: 2)
                         )
                 }
                 .padding(.horizontal, 32)
@@ -122,7 +122,7 @@ struct LoginViewFromProfile: View {
                         navigateToSignUp = true
                     }
                     .font(.footnote)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
                 .padding(.top, 8)
                 .padding(.trailing, 10)
@@ -170,7 +170,7 @@ struct LoginViewFromProfile: View {
                         UserDefaults.standard.set(rememberMe, forKey: "rememberMe")
                     }) {
                         Image(systemName: rememberMe ? "checkmark.square" : "square")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.customBlue)
                         Text("Remember Me")
                     }
 
@@ -180,7 +180,7 @@ struct LoginViewFromProfile: View {
                         navigateToForgotPwd = true
                     }
                     .font(.footnote)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
                 .frame(maxWidth: 400)
 
@@ -193,11 +193,11 @@ struct LoginViewFromProfile: View {
                     Text("Sign In")
                         .frame(width: 300)
                         .padding()
-                        .background(isFormValid ? Color.blue : Color.white)
-                        .foregroundColor(isFormValid ? .white : .blue)
+                        .background(isFormValid ? Color.customBlue : Color.white)
+                        .foregroundColor(isFormValid ? .white : .customBlue)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue, lineWidth: isFormValid ? 0 : 2)
+                                .stroke(Color.customBlue, lineWidth: isFormValid ? 0 : 2)
                         )
                         .cornerRadius(10)
                 }
@@ -227,7 +227,7 @@ struct LoginViewFromProfile: View {
                 if isLoading {
                     VStack {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                            .progressViewStyle(CircularProgressViewStyle(tint: .customBlue))
                             .scaleEffect(1.5)
                             .frame(width: 50, height: 50)
                             .background(Color(.systemBackground).opacity(0.8))
@@ -400,7 +400,7 @@ struct RegistrationViewFromProfile: View {
                         navigateToLogin = true
                     }
                     .font(.footnote)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
                 .padding(.top, 8)
                 .padding(.trailing, 10)
@@ -448,7 +448,7 @@ struct RegistrationViewFromProfile: View {
                     }
                     .frame(width: 300)
                     .padding()
-                    .background(isFormValid ? Color.blue : Color.gray)
+                    .background(isFormValid ? Color.customBlue : Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                     .disabled(!isFormValid || isLoading)
@@ -504,7 +504,7 @@ struct RegistrationViewFromProfile: View {
                 if isLoading {
                     VStack {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                            .progressViewStyle(CircularProgressViewStyle(tint: .customBlue))
                             .scaleEffect(1.5)
                             .frame(width: 50, height: 50)
                             .background(Color(.systemBackground).opacity(0.8))

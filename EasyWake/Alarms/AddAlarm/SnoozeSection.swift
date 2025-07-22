@@ -86,7 +86,7 @@ struct SnoozeSection: View {
                         let totalMinutes = viewModel.alarm.maxSnoozes * viewModel.alarm.snoozeMinutes
                         HStack {
                             Image(systemName: "info.circle.fill")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.customBlue)
                                 .font(.caption)
                             Text("Total snooze time: \(formatSnoozeTime(totalMinutes))")
                                 .font(.caption)

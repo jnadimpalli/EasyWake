@@ -410,61 +410,39 @@ struct WeatherAlarmContainer: View {
     @ObservedObject var weatherAlarmService: WeatherAlarmService
     @State private var showingAlarmDetail: Alarm?
     @State private var showingContextMenu: WeatherAlarmAdjustment?
+    @State private var showingBreakdownSheet: BreakdownSheetItem?
     @EnvironmentObject var alarmStore: AlarmStore
     
     @State private var hasAdjustments = false
+    
+    // MARK: - Computed Properties
+    private var weatherAdjustments: [WeatherAlarmAdjustment] {
+        weatherAlarmService.activeAdjustments.map { alarmWithAdjustment in
+            WeatherAlarmAdjustment(
+                alarmId: alarmWithAdjustment.alarm.id,
+                originalTime: alarmWithAdjustment.alarm.nextOccurrenceTime ?? alarmWithAdjustment.alarm.alarmTime,
+                adjustedTime: alarmWithAdjustment.adjustment.adjustedWakeTime,
+                adjustmentMinutes: alarmWithAdjustment.adjustment.adjustmentMinutes,
+                extraTimeMinutes: 0,
+                weatherCondition: alarmWithAdjustment.weatherCondition,
+                routeSummary: alarmWithAdjustment.routeSummary,
+                explanation: alarmWithAdjustment.adjustment.reason,
+                isSignificant: alarmWithAdjustment.isSignificant
+            )
+        }
+    }
     
     var body: some View {
         Group {
             if !weatherAlarmService.activeAdjustments.isEmpty {
                 VStack(spacing: 12) {
                     // Section Header
-                    HStack {
-                        Label("Weather Impact", systemImage: "cloud.bolt.rain.fill")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.orange)
-                        
-                        Spacer()
-                        
-                        if weatherAlarmService.isLoading {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .tint(.secondary)
-                        }
-                    }
-                    .padding(.horizontal, 16)
+                    weatherImpactHeader
                     
                     // Weather Alarm Cards
-                    WeatherAlarmCarousel(
-                        adjustments: weatherAlarmService.activeAdjustments.map { alarmWithAdjustment in
-                            WeatherAlarmAdjustment(
-                                alarmId: alarmWithAdjustment.alarm.id,
-                                originalTime: alarmWithAdjustment.alarm.nextOccurrenceTime ?? alarmWithAdjustment.alarm.alarmTime,
-                                adjustedTime: alarmWithAdjustment.adjustment.adjustedWakeTime,
-                                adjustmentMinutes: alarmWithAdjustment.adjustment.adjustmentMinutes,
-                                extraTimeMinutes: 0,
-                                weatherCondition: alarmWithAdjustment.weatherCondition,
-                                routeSummary: alarmWithAdjustment.routeSummary,
-                                explanation: alarmWithAdjustment.adjustment.reason,
-                                isSignificant: alarmWithAdjustment.isSignificant
-                            )
-                        },
-                        onCardTap: { adjustment in
-                            if let alarmWithAdjustment = weatherAlarmService.activeAdjustments.first(where: { $0.alarm.id == adjustment.alarmId }) {
-                                showingAlarmDetail = alarmWithAdjustment.alarm
-                            }
-                        },
-                        onCardDismiss: { adjustment in
-                            weatherAlarmService.dismissAdjustment(for: adjustment.alarmId)
-                        },
-                        onCardLongPress: { adjustment in
-                            showingContextMenu = adjustment
-                        }
-                    )
-                    .environmentObject(alarmStore)
+                    weatherAlarmCarousel
                 }
-                .padding(.bottom, 24) // INCREASED bottom padding for better spacing
+                .padding(.bottom, 24)
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: hasAdjustments)
             }
@@ -474,6 +452,9 @@ struct WeatherAlarmContainer: View {
         }
         .onChange(of: weatherAlarmService.activeAdjustments.count) { _, newCount in
             hasAdjustments = newCount > 0
+        }
+        .sheet(item: $showingBreakdownSheet) { item in
+            AlarmBreakdownSheet(alarm: item.alarm, adjustment: item.adjustment)
         }
         .fullScreenCover(item: $showingAlarmDetail) { alarm in
             AddAlarmView(
@@ -490,32 +471,98 @@ struct WeatherAlarmContainer: View {
             )
         }
         .actionSheet(item: $showingContextMenu) { adjustment in
-            guard let alarm = adjustment.getCurrentAlarm(from: alarmStore) else {
-                return ActionSheet(
-                    title: Text("Alarm Not Found"),
-                    message: Text("This alarm has been deleted"),
-                    buttons: [.cancel()]
-                )
-            }
+            createActionSheet(for: adjustment)
+        }
+    }
+    
+    // MARK: - Subviews
+    private var weatherImpactHeader: some View {
+        HStack {
+            Label("Weather Impact", systemImage: "cloud.bolt.rain.fill")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.orange)
             
+            Spacer()
+            
+            if weatherAlarmService.isLoading {
+                ProgressView()
+                    .scaleEffect(0.8)
+                    .tint(.secondary)
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+    
+    private var weatherAlarmCarousel: some View {
+        WeatherAlarmCarousel(
+            adjustments: weatherAdjustments,
+            onCardTap: handleCardTap,
+            onCardDismiss: handleCardDismiss,
+            onCardLongPress: handleCardLongPress
+        )
+        .environmentObject(alarmStore)
+    }
+    
+    // MARK: - Action Handlers
+    private func handleCardTap(_ adjustment: WeatherAlarmAdjustment) {
+        if let alarmWithAdjustment = weatherAlarmService.activeAdjustments.first(where: { $0.alarm.id == adjustment.alarmId }) {
+            showingBreakdownSheet = BreakdownSheetItem(
+                alarm: alarmWithAdjustment.alarm,
+                adjustment: alarmWithAdjustment.adjustment
+            )
+        }
+    }
+    
+    private func handleCardDismiss(_ adjustment: WeatherAlarmAdjustment) {
+        weatherAlarmService.dismissAdjustment(for: adjustment.alarmId)
+    }
+    
+    private func handleCardLongPress(_ adjustment: WeatherAlarmAdjustment) {
+        showingContextMenu = adjustment
+    }
+    
+    private func createActionSheet(for adjustment: WeatherAlarmAdjustment) -> ActionSheet {
+        guard let alarm = adjustment.getCurrentAlarm(from: alarmStore) else {
             return ActionSheet(
-                title: Text("Weather Alarm Options"),
-                message: Text(alarm.name),
-                buttons: [
-                    .default(Text("View Alarm Details")) {
-                        showingAlarmDetail = alarm
-                    },
-                    .default(Text("Dismiss for Today")) {
-                        weatherAlarmService.dismissAdjustmentForToday(adjustment.alarmId)
-                    },
-                    .default(Text("Turn Off Weather Adjustments")) {
-                        Task {await weatherAlarmService.disableWeatherAdjustments(for: alarm)}
-                    },
-                    .default(Text("View Route")) {
-                        weatherAlarmService.showRoute(for: alarm)
-                    },
-                    .cancel()
-                ]
+                title: Text("Alarm Not Found"),
+                message: Text("This alarm has been deleted"),
+                buttons: [.cancel()]
+            )
+        }
+        
+        return ActionSheet(
+            title: Text("Weather Alarm Options"),
+            message: Text(alarm.name),
+            buttons: createActionSheetButtons(for: alarm, adjustment: adjustment)
+        )
+    }
+    
+    private func createActionSheetButtons(for alarm: Alarm, adjustment: WeatherAlarmAdjustment) -> [ActionSheet.Button] {
+        [
+            .default(Text("View Breakdown")) {
+                handleBreakdownAction(for: adjustment)
+            },
+            .default(Text("Dismiss for Today")) {
+                weatherAlarmService.dismissAdjustmentForToday(adjustment.alarmId)
+            },
+            .default(Text("Turn Off Weather Adjustments")) {
+                Task {
+                    await weatherAlarmService.disableWeatherAdjustments(for: alarm)
+                }
+            },
+            .default(Text("View Route")) {
+                weatherAlarmService.showRoute(for: alarm)
+            },
+            .cancel()
+        ]
+    }
+    
+    private func handleBreakdownAction(for adjustment: WeatherAlarmAdjustment) {
+        if let alarmWithAdjustment = weatherAlarmService.activeAdjustments.first(where: { $0.alarm.id == adjustment.alarmId }) {
+            showingBreakdownSheet = BreakdownSheetItem(
+                alarm: alarmWithAdjustment.alarm,
+                adjustment: alarmWithAdjustment.adjustment
             )
         }
     }

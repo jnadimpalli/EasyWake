@@ -820,7 +820,7 @@ struct SmartAlarmStatusView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "brain.head.profile")
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 Text("Smart Alarm")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -835,7 +835,7 @@ struct SmartAlarmStatusView: View {
                         showingDetails = true
                     }
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
             }
             
@@ -1087,7 +1087,7 @@ struct RecommendationCardView: View {
         case "preparation":
             return .orange
         case "behavior":
-            return .blue
+            return .customBlue
         case "info":
             return .gray
         default:

@@ -67,19 +67,19 @@ struct FavoriteLocationCard: View {
                 // Daytime gradients
                 if weather.symbolName.contains("sun") {
                     return LinearGradient(
-                        colors: [Color.blue.opacity(0.9), Color.cyan.opacity(0.7)],
+                        colors: [Color.customBlue.opacity(0.9), Color.cyan.opacity(0.7)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 } else if weather.symbolName.contains("cloud") {
                     return LinearGradient(
-                        colors: [Color.gray.opacity(0.8), Color.blue.opacity(0.6)],
+                        colors: [Color.gray.opacity(0.8), Color.customBlue.opacity(0.6)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 } else if weather.symbolName.contains("rain") {
                     return LinearGradient(
-                        colors: [Color.gray.opacity(0.9), Color.blue.opacity(0.7)],
+                        colors: [Color.gray.opacity(0.9), Color.customBlue.opacity(0.7)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -95,7 +95,7 @@ struct FavoriteLocationCard: View {
         }
         
         return LinearGradient(
-            colors: [Color.blue.opacity(0.8), Color.cyan.opacity(0.6)],
+            colors: [Color.customBlue.opacity(0.8), Color.cyan.opacity(0.6)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

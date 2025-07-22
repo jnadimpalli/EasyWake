@@ -51,10 +51,10 @@ struct GetStartedView: View {
                         }
                         .frame(width: geometry.size.width * 0.6)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.customBlue)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.blue, lineWidth: 2)
+                                .stroke(Color.customBlue, lineWidth: 2)
                         )
                         .foregroundColor(.white)
                         .cornerRadius(10)
@@ -68,9 +68,9 @@ struct GetStartedView: View {
                         .padding()
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue, lineWidth: 2)
+                                .stroke(Color.customBlue, lineWidth: 2)
                         )
-                        .foregroundColor(.blue)
+                        .foregroundColor(.customBlue)
                         .buttonStyle(PlainButtonStyle())
                     }
                     .frame(width: geometry.size.width)

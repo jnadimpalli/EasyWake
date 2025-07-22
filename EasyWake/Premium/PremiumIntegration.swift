@@ -130,7 +130,7 @@ struct PremiumUpgradePrompt: View {
                 ZStack {
                     Circle()
                         .fill(LinearGradient(
-                            colors: [.blue, .purple],
+                            colors: [.customBlue, .purple],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ))
@@ -261,7 +261,7 @@ struct FeatureRow: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundColor(.customBlue)
                 .frame(width: 32)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -287,14 +287,14 @@ struct PremiumButtonStyle: ButtonStyle {
         configuration.label
             .font(.headline)
             .fontWeight(.semibold)
-            .foregroundColor(isPrimary ? .white : .blue)
+            .foregroundColor(isPrimary ? .white : .customBlue)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(
                 Group {
                     if isPrimary {
                         LinearGradient(
-                            colors: [.blue, .purple],
+                            colors: [.customBlue, .purple],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -305,7 +305,7 @@ struct PremiumButtonStyle: ButtonStyle {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isPrimary ? Color.clear : Color.blue, lineWidth: 2)
+                    .stroke(isPrimary ? Color.clear : Color.customBlue, lineWidth: 2)
             )
             .cornerRadius(12)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)

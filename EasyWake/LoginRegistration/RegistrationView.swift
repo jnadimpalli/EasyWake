@@ -32,7 +32,7 @@ struct RegistrationView: View {
                         navigateToLogin = true
                     }
                     .font(.footnote)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.customBlue)
                 }
                 .padding(.top, 8)
                 .padding(.trailing, 10)
@@ -80,7 +80,7 @@ struct RegistrationView: View {
                     }
                     .frame(width: 300)
                     .padding()
-                    .background(isFormValid ? Color.blue : Color.gray)
+                    .background(isFormValid ? Color.customBlue : Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                     .disabled(!isFormValid)
@@ -137,11 +137,11 @@ struct RegistrationView: View {
                     .frame(maxWidth: 300)
                     .padding()
                     .background(Color.white)
-                    .foregroundColor(Color.blue)
+                    .foregroundColor(Color.customBlue)
                     .cornerRadius(10)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.blue, lineWidth: 1)
+                            .stroke(Color.customBlue, lineWidth: 1)
                     )
                 }
                 .frame(maxWidth: .infinity, alignment: .center)

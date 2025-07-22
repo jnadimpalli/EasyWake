@@ -258,7 +258,7 @@ struct WeatherAlertDetailView: View {
                         Text("Details")
                             .font(.headline)
                         
-                        DetailRow(icon: "clock.fill", title: "Effective Time", value: alert.effectiveTimeRange, color: .blue)
+                        DetailRow(icon: "clock.fill", title: "Effective Time", value: alert.effectiveTimeRange, color: .customBlue)
                         DetailRow(icon: "person.fill", title: "Issued By", value: alert.issuingAuthority, color: .secondary)
                         
                         if !alert.affectedAreas.isEmpty {
@@ -299,12 +299,12 @@ struct AlertCardButtonStyle: ButtonStyle {
 #Preview("Single Alert") {
     let manager = WeatherAlertManager()
     return WeatherAlertsContainer(alertManager: manager)
-        .background(Color.blue.gradient)
+        .background(Color.customBlue.gradient)
 }
 
 #Preview("Dark Mode") {
     let manager = WeatherAlertManager()
     return WeatherAlertsContainer(alertManager: manager)
-        .background(Color.blue.gradient)
+        .background(Color.customBlue.gradient)
         .preferredColorScheme(.dark)
 }

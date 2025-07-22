@@ -82,7 +82,7 @@ struct UserSettingsView: View {
                         Toggle(isOn: $viewModel.pushNotificationsEnabled) {
                             HStack {
                                 Image(systemName: "bell.fill")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.customBlue)
                                     .frame(width: 25)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Push Notifications")
@@ -127,7 +127,7 @@ struct UserSettingsView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(viewModel.canSave ? Color.blue : Color.gray)
+                            .background(viewModel.canSave ? Color.customBlue : Color.gray)
                             .foregroundColor(.white)
                             .cornerRadius(12)
                             .disabled(!viewModel.canSave || viewModel.isLoading)

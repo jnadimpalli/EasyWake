@@ -120,12 +120,12 @@ struct UpcomingAlarmCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("ADJUSTED")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(alarmInfo.adjustment!.adjustmentMinutes > 0 ? .orange : .green)
+                        .foregroundColor(alarmInfo.adjustment!.adjustmentMinutes > 0 ? .primary : .green)
                         .textCase(.uppercase)
                     
                     Text(formatTime(alarmInfo.adjustedTime!))
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(alarmInfo.adjustment!.adjustmentMinutes > 0 ? .orange : .green)
+                        .foregroundColor(alarmInfo.adjustment!.adjustmentMinutes > 0 ? .primary : .green)
                 }
             } else {
                 // Just show the scheduled time
@@ -354,15 +354,42 @@ struct UpcomingAlarmsCarousel: View {
 struct UpcomingAlarmsContainer: View {
     @EnvironmentObject var alarmStore: AlarmStore
     @State private var showingAlarmDetail: Alarm?
+    @State private var selectedTimeFrame: TimeFrame = .twentyFourHours
+    @AppStorage("upcomingAlarmsTimeFrame") private var savedTimeFrame: String = "24h"
+    
+    enum TimeFrame: String, CaseIterable {
+        case threeHours = "3h"
+        case sixHours = "6h"
+        case twelveHours = "12h"
+        case twentyFourHours = "24h"
+        
+        var hours: Double {
+            switch self {
+            case .threeHours: return 3
+            case .sixHours: return 6
+            case .twelveHours: return 12
+            case .twentyFourHours: return 24
+            }
+        }
+        
+        var displayText: String {
+            switch self {
+            case .threeHours: return "3 hours"
+            case .sixHours: return "6 hours"
+            case .twelveHours: return "12 hours"
+            case .twentyFourHours: return "24 hours"
+            }
+        }
+    }
     
     private var upcomingAlarms: [UpcomingAlarmInfo] {
         let now = Date()
-        let next24Hours = now.addingTimeInterval(24 * 60 * 60)
+        let timeFrameEnd = now.addingTimeInterval(selectedTimeFrame.hours * 60 * 60)
         
         return alarmStore.alarms.compactMap { alarm in
             guard alarm.isEnabled,
                   let nextOccurrence = alarm.nextOccurrenceTime,
-                  nextOccurrence > now && nextOccurrence <= next24Hours else {
+                  nextOccurrence > now && nextOccurrence <= timeFrameEnd else {
                 return nil
             }
             
@@ -380,49 +407,107 @@ struct UpcomingAlarmsContainer: View {
     
     var body: some View {
         Group {
-            if !upcomingAlarms.isEmpty {
-                VStack(spacing: 28) {
-                    // Section Header
-                    HStack {
-                        Text("Upcoming Alarms")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
-                        
-                        Spacer()
-                        
-                        Text("Next 24h")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal, 16)
-                    
-                    // Alarm Cards
-                    UpcomingAlarmsCarousel(
-                        upcomingAlarms: upcomingAlarms,
-                        onCardTap: { alarmInfo in
-                            showingAlarmDetail = alarmInfo.alarm
+            if !upcomingAlarms.isEmpty || selectedTimeFrame != .twentyFourHours {
+                VStack(spacing: 16) {
+                    // Section Header with Segmented Control
+                    VStack(spacing: 12) {
+                        HStack {
+                            Text("Upcoming Alarms")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Menu {
+                                ForEach(TimeFrame.allCases.reversed(), id: \.self) { timeFrame in
+                                    Button {
+                                        selectedTimeFrame = timeFrame
+                                    } label: {
+                                        if selectedTimeFrame == timeFrame {
+                                            Label("Next \(timeFrame.displayText)", systemImage: "checkmark")
+                                        } else {
+                                            Text("Next \(timeFrame.displayText)")
+                                        }
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text("Next \(selectedTimeFrame.displayText)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Image(systemName: "chevron.down")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
                         }
-                    )
+                        .padding(.horizontal, 16)
+                    }
+                    
+                    // Alarm Cards or Empty State
+                    if upcomingAlarms.isEmpty {
+                        EmptyUpcomingAlarmsView(timeFrame: selectedTimeFrame)
+                            .padding(.horizontal, 16)
+                    } else {
+                        UpcomingAlarmsCarousel(
+                            upcomingAlarms: upcomingAlarms,
+                            onCardTap: { alarmInfo in
+                                showingAlarmDetail = alarmInfo.alarm
+                            }
+                        )
+                    }
                 }
+                .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
+                .onAppear {
+                    // Load saved preference
+                    if let saved = TimeFrame(rawValue: savedTimeFrame) {
+                        selectedTimeFrame = saved
+                    }
+                }
             }
         }
         .fullScreenCover(item: $showingAlarmDetail) { alarm in
             AddAlarmView(
                 alarm: alarm,
                 onSave: { updatedAlarm in
-                    // Will be handled by DataCoordinator
                     showingAlarmDetail = nil
                 },
                 onCancel: {
                     showingAlarmDetail = nil
                 },
                 onDelete: { deletedAlarm in
-                    // Will be handled by DataCoordinator
                     showingAlarmDetail = nil
                 }
             )
         }
+    }
+}
+
+// Empty state when no alarms in selected time frame
+struct EmptyUpcomingAlarmsView: View {
+    let timeFrame: UpcomingAlarmsContainer.TimeFrame
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("No alarms in the next \(timeFrame.displayText)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Text("Try selecting a longer time frame")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 20)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.secondary.opacity(0.1))
+        )
     }
 }

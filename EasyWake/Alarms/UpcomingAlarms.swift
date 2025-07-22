@@ -3,7 +3,7 @@
 import SwiftUI
 
 // MARK: - Upcoming Alarm Data Model
-struct UpcomingAlarmInfo: Identifiable {
+struct UpcomingAlarmInfo: Identifiable, Equatable  {
     let id = UUID()
     let alarm: Alarm
     let scheduledTime: Date
@@ -29,12 +29,21 @@ struct UpcomingAlarmInfo: Identifiable {
             return "\(minutes)m"
         }
     }
+    
+    static func ==(lhs: UpcomingAlarmInfo, rhs: UpcomingAlarmInfo) -> Bool {
+        // compare the alarm identity
+        return lhs.alarm.id            == rhs.alarm.id
+            && lhs.scheduledTime       == rhs.scheduledTime
+            && lhs.adjustedTime        == rhs.adjustedTime
+            && lhs.adjustment          == rhs.adjustment
+    }
 }
 
 // MARK: - Single Upcoming Alarm Card
 struct UpcomingAlarmCard: View {
     let alarmInfo: UpcomingAlarmInfo
     let onTap: () -> Void
+    let onDismiss: () -> Void
     
     @Environment(\.colorScheme) private var colorScheme
     @State private var isPressed = false
@@ -93,6 +102,16 @@ struct UpcomingAlarmCard: View {
                     .font(.system(size: 16))
                     .foregroundColor(.customBlue)
             }
+            
+            Button(action: {
+                onDismiss()
+            }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.secondary.opacity(0.6))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(PlainButtonStyle())
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)
@@ -266,6 +285,7 @@ struct UpcomingAlarmCard: View {
 struct UpcomingAlarmsCarousel: View {
     let upcomingAlarms: [UpcomingAlarmInfo]
     let onCardTap: (UpcomingAlarmInfo) -> Void
+    let onCardDismiss: (UpcomingAlarmInfo) -> Void
     
     @State private var currentIndex = 0
     @State private var dragOffset: CGFloat = 0
@@ -280,7 +300,8 @@ struct UpcomingAlarmsCarousel: View {
                 // Single card
                 UpcomingAlarmCard(
                     alarmInfo: upcomingAlarms[0],
-                    onTap: { onCardTap(upcomingAlarms[0]) }
+                    onTap: { onCardTap(upcomingAlarms[0]) },
+                    onDismiss: { onCardDismiss(upcomingAlarms[0]) }
                 )
                 .padding(.horizontal, 16)
                 .frame(height: cardHeight)
@@ -292,7 +313,8 @@ struct UpcomingAlarmsCarousel: View {
                             ForEach(Array(upcomingAlarms.enumerated()), id: \.element.id) { index, alarmInfo in
                                 UpcomingAlarmCard(
                                     alarmInfo: alarmInfo,
-                                    onTap: { onCardTap(alarmInfo) }
+                                    onTap: { onCardTap(alarmInfo) },
+                                    onDismiss: { onCardDismiss(alarmInfo) }
                                 )
                                 .frame(width: geometry.size.width - 32)
                                 .frame(height: cardHeight)
@@ -347,6 +369,17 @@ struct UpcomingAlarmsCarousel: View {
                 }
             }
         }
+        .onAppear {
+            currentIndex = 0
+        }
+        .onChange(of: upcomingAlarms) { _, _ in
+            // Adjust current index if needed when alarms are dismissed
+            if currentIndex >= upcomingAlarms.count && !upcomingAlarms.isEmpty {
+                currentIndex = upcomingAlarms.count - 1
+            } else if upcomingAlarms.isEmpty {
+                currentIndex = 0
+            }
+        }
     }
 }
 
@@ -356,6 +389,9 @@ struct UpcomingAlarmsContainer: View {
     @State private var showingAlarmDetail: Alarm?
     @State private var selectedTimeFrame: TimeFrame = .twentyFourHours
     @AppStorage("upcomingAlarmsTimeFrame") private var savedTimeFrame: String = "24h"
+    
+    // Track dismissed alarms for current session
+    @State private var sessionDismissedAlarmIds: Set<UUID> = []
     
     enum TimeFrame: String, CaseIterable {
         case threeHours = "3h"
@@ -387,6 +423,9 @@ struct UpcomingAlarmsContainer: View {
         let timeFrameEnd = now.addingTimeInterval(selectedTimeFrame.hours * 60 * 60)
         
         return alarmStore.alarms.compactMap { alarm in
+            // Skip if dismissed in current session
+            guard !sessionDismissedAlarmIds.contains(alarm.id) else { return nil }
+            
             guard alarm.isEnabled,
                   let nextOccurrence = alarm.nextOccurrenceTime,
                   nextOccurrence > now && nextOccurrence <= timeFrameEnd else {
@@ -423,6 +462,8 @@ struct UpcomingAlarmsContainer: View {
                                 ForEach(TimeFrame.allCases.reversed(), id: \.self) { timeFrame in
                                     Button {
                                         selectedTimeFrame = timeFrame
+                                        // Reset dismissed alarms when changing time frame
+                                        sessionDismissedAlarmIds.removeAll()
                                     } label: {
                                         if selectedTimeFrame == timeFrame {
                                             Label("Next \(timeFrame.displayText)", systemImage: "checkmark")
@@ -454,6 +495,9 @@ struct UpcomingAlarmsContainer: View {
                             upcomingAlarms: upcomingAlarms,
                             onCardTap: { alarmInfo in
                                 showingAlarmDetail = alarmInfo.alarm
+                            },
+                            onCardDismiss: { alarmInfo in
+                                dismissUpcomingAlarm(alarmInfo.alarm.id)
                             }
                         )
                     }
@@ -482,6 +526,16 @@ struct UpcomingAlarmsContainer: View {
                 }
             )
         }
+    }
+    
+    private func dismissUpcomingAlarm(_ alarmId: UUID) {
+        withAnimation(.easeOut(duration: 0.3)) {
+            sessionDismissedAlarmIds.insert(alarmId)
+        }
+        
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
     }
 }
 

@@ -46,6 +46,9 @@ class WeatherAlarmService: ObservableObject {
     private var lastCalculationTimes: [UUID: Date] = [:]
     private let minimumRecalculationInterval: TimeInterval = 60 // 1 minute
     
+    // NEW: Track dismissed adjustments for current session
+    @Published private var sessionDismissedAlarmIds: Set<UUID> = []
+    
     struct AlarmWithAdjustment: Identifiable {
         let id = UUID()
         let alarm: Alarm
@@ -61,6 +64,9 @@ class WeatherAlarmService: ObservableObject {
     // COMPUTED PROPERTY - Single source of truth from alarms
     var activeAdjustments: [AlarmWithAdjustment] {
         alarmStore.alarms.compactMap { alarm in
+            // Skip if dismissed in current session
+            guard !sessionDismissedAlarmIds.contains(alarm.id) else { return nil }
+
             guard let adjustment = alarm.currentAdjustment,
                   alarm.smartEnabled && alarm.isEnabled,
                   abs(adjustment.adjustmentMinutes) >= 5 else { return nil }
@@ -191,22 +197,24 @@ class WeatherAlarmService: ObservableObject {
     // MARK: - Public Methods
     
     func dismissAdjustment(for alarmId: UUID) {
-        // Clear the adjustment from the alarm
-        if let alarm = alarmStore.alarms.first(where: { $0.id == alarmId }) {
-            var updatedAlarm = alarm
-            updatedAlarm.currentAdjustment = nil
-            Task {
-                isUpdatingFromCalculation = true
-                await dataCoordinator.updateAlarm(updatedAlarm, skipAdjustmentCalculation: true)
-                isUpdatingFromCalculation = false
-            }
-        }
+        // Add to session dismissed set
+        sessionDismissedAlarmIds.insert(alarmId)
+        
+        // Don't clear the adjustment from the alarm itself
+        // This allows it to be shown again after app restart
+        objectWillChange.send()
     }
     
     func dismissAdjustmentForToday(_ alarmId: UUID) {
-        // For now, just dismiss it completely
-        // In future, track dismissed dates
+        // For now, just dismiss it for the session
+        // In future, could track dismissed dates
         dismissAdjustment(for: alarmId)
+    }
+    
+    // NEW: Reset dismissed alarms (call on app restart if needed)
+    func resetDismissedAlarms() {
+        sessionDismissedAlarmIds.removeAll()
+        objectWillChange.send()
     }
     
     func disableWeatherAdjustments(for alarm: Alarm) async {

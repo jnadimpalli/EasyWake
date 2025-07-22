@@ -305,7 +305,7 @@ struct WeatherAlarmCarousel: View {
                 )
                 .environmentObject(alarmStore)
                 .padding(.horizontal, 16)
-                .frame(height: cardHeight) // Fixed height
+                .frame(height: cardHeight + 16) // Fixed height with space for dots
             } else {
                 // Multiple cards carousel
                 ZStack(alignment: .bottom) {

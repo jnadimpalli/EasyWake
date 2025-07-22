@@ -5,8 +5,6 @@ struct UserPreferences: Codable {
     var clockFormat24h: Bool = false
     var travelMethod: TravelMethod = .drive
     var commuteBuffer: Int = 10 // minutes
-    var limitSnooze: Bool = false
-    var maxSnoozes: Int = 3
     
     // Notifications
     var pushNotificationsEnabled: Bool = true

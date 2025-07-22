@@ -173,12 +173,12 @@ struct WeatherAlarmCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text(adjustment.canSleepIn ? "SLEEP UNTIL" : "WAKE UP AT")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(adjustment.canSleepIn ? .green : .orange)
+                        .foregroundColor(adjustment.canSleepIn ? .green : .primary)
                         .textCase(.uppercase)
                     
                     Text(formatLocalTime(adjustment.adjustedTime))
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(adjustment.canSleepIn ? .green : .orange)
+                        .foregroundColor(adjustment.canSleepIn ? .green : .primary)
                 }
             }
             
@@ -203,7 +203,7 @@ struct WeatherAlarmCard: View {
                 } else {
                     // Wake early section with same height as sleep-in banner
                     HStack(spacing: 8) {
-                        Text("\(adjustment.adjustmentText) • \(adjustment.explanation)")
+                        Text("\(adjustment.adjustmentText)") //• \(adjustment.explanation)")
                             .font(.system(size: 12, weight: .regular))
                             .foregroundColor(.secondary)
                             .lineLimit(1)

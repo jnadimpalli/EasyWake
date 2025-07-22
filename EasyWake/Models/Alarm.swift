@@ -1,4 +1,4 @@
-// Cleaned Alarm.swift - Removed unused/redundant variables
+// Alarm.swift
 
 import Foundation
 import SwiftUI
@@ -114,6 +114,11 @@ struct Alarm: Identifiable, Codable, Equatable {
     var volume: Double
     var vibrationEnabled: Bool
     
+    // NEW: Individual snooze settings
+    var snoozeEnabled: Bool
+    var maxSnoozes: Int
+    var snoozeMinutes: Int
+    
     // Weather adjustment result (stored directly in alarm)
     var currentAdjustment: AlarmAdjustment?
     
@@ -127,6 +132,11 @@ struct Alarm: Identifiable, Codable, Equatable {
         }
     }
     
+    // NEW: Computed property for snooze buffer in seconds
+    var totalSnoozeBuffer: TimeInterval {
+        guard snoozeEnabled else { return 0 }
+        return TimeInterval(maxSnoozes * snoozeMinutes * 60)
+    }
     
     // MARK: - Initialization
     init(
@@ -147,6 +157,9 @@ struct Alarm: Identifiable, Codable, Equatable {
         soundTone: String = "Alarm.caf",
         volume: Double = 0.5,
         vibrationEnabled: Bool = true,
+        snoozeEnabled: Bool = false,
+        maxSnoozes: Int = 2,
+        snoozeMinutes: Int = 9,
         currentAdjustment: AlarmAdjustment? = nil
     ) {
         self.id = id
@@ -166,6 +179,9 @@ struct Alarm: Identifiable, Codable, Equatable {
         self.soundTone = soundTone
         self.volume = volume
         self.vibrationEnabled = vibrationEnabled
+        self.snoozeEnabled = snoozeEnabled
+        self.maxSnoozes = maxSnoozes
+        self.snoozeMinutes = snoozeMinutes
         self.currentAdjustment = currentAdjustment
     }
     

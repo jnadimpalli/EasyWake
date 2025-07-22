@@ -478,7 +478,7 @@ struct CommutePreferencesSection: View {
             // Commute Buffer
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Commute Buffer")
+                    Text("Default Commute Buffer")
                     Spacer()
                     Text(bufferText(from: viewModel.preferences.commuteBuffer))
                         .foregroundColor(.secondary)
@@ -502,23 +502,6 @@ struct CommutePreferencesSection: View {
                         .font(.caption)
                 }
                 .onChange(of: viewModel.preferences.commuteBuffer) { _, _ in
-                    viewModel.updatePreferences()
-                }
-            }
-            
-            // Smart Snooze
-            Toggle("Limit Snooze", isOn: $viewModel.preferences.limitSnooze)
-                .onChange(of: viewModel.preferences.limitSnooze) { _, _ in
-                    viewModel.updatePreferences()
-                }
-            
-            if viewModel.preferences.limitSnooze {
-                Stepper(
-                    "Max \(viewModel.preferences.maxSnoozes) snoozes",
-                    value: $viewModel.preferences.maxSnoozes,
-                    in: 1...10
-                )
-                .onChange(of: viewModel.preferences.maxSnoozes) { _, _ in
                     viewModel.updatePreferences()
                 }
             }

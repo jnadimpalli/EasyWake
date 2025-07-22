@@ -1,4 +1,4 @@
-// AddAlarmView.swift - Fast Dismissal Fix
+// AddAlarmView.swift - Updated with Snooze Section
 
 import SwiftUI
 
@@ -59,6 +59,10 @@ struct AddAlarmView: View {
                     
                     // Sound & Vibration Section
                     SoundSection(viewModel: viewModel)
+                        .disabled(isSaving)
+                    
+                    // NEW: Snooze Section
+                    SnoozeSection(viewModel: viewModel)
                         .disabled(isSaving)
                     
                     // Smart Settings Section

@@ -89,6 +89,8 @@ struct AlarmSettingsPayload: Codable {
     let specificDate: String?
     let isEnabled: Bool
     let snoozeEnabled: Bool
+    let maxSnoozes: Int
+    let snoozeMinutes: Int
     let vibrationEnabled: Bool
     
     enum CodingKeys: String, CodingKey {
@@ -108,6 +110,8 @@ struct AlarmSettingsPayload: Codable {
         case specificDate = "specific_date"
         case isEnabled = "is_enabled"
         case snoozeEnabled = "snooze_enabled"
+        case maxSnoozes = "max_snoozes"
+        case snoozeMinutes = "snooze_minutes"
         case vibrationEnabled = "vibration_enabled"
     }
 }
@@ -494,23 +498,28 @@ class SmartAlarmCalculationService: ObservableObject {
             print("[SMART-ALARM] WARNING: Unusual time difference detected")
         }
         
+        // UPDATED: Calculate snooze duration from individual alarm settings
+        let snoozeDurationMinutes = alarm.snoozeEnabled ? alarm.snoozeMinutes : 0
+        let maxSnoozes = alarm.snoozeEnabled ? alarm.maxSnoozes : 0
+        let averageSnoozesPerAlarm = alarm.snoozeEnabled ? Double(alarm.maxSnoozes) / 2.0 : 0.0
+        
         // Convert user profile
         let userPayload = UserProfilePayload(
             userId: userProfile.email.isEmpty ? "guest_user" : userProfile.email,
             defaultPreparationMinutes: Int(alarm.preparationInterval / 60),
             commuteBufferMinutes: userProfile.preferences.commuteBuffer,
-            snoozeDurationMinutes: 9, // Default snooze duration
-            minimumSleepHours: nil, // Could be added to user preferences
+            snoozeDurationMinutes: snoozeDurationMinutes,  // UPDATED: Use alarm's snooze minutes
+            minimumSleepHours: nil,
             preferredWakeTimeEarliest: nil,
             preferredWakeTimeLatest: nil,
-            limitSnooze: userProfile.preferences.limitSnooze,
-            maxSnoozes: userProfile.preferences.maxSnoozes,
-            averageSnoozesPerAlarm: nil, // Historical data not implemented yet
+            limitSnooze: alarm.snoozeEnabled,  // UPDATED: Use alarm's snooze enabled state
+            maxSnoozes: maxSnoozes,  // UPDATED: Use alarm's max snoozes
+            averageSnoozesPerAlarm: averageSnoozesPerAlarm,  // UPDATED: Calculate from alarm settings
             defaultTravelMethod: mapTravelMethod(userProfile.preferences.travelMethod),
-            weatherSensitivityMultiplier: 1.0, // Default sensitivity
+            weatherSensitivityMultiplier: 1.0,
             homeAddress: userProfile.homeAddress?.displayAddress,
             workAddress: userProfile.workAddress?.displayAddress,
-            historicalAccuracyRate: nil, // Historical data not implemented yet
+            historicalAccuracyRate: nil,
             averageActualPrepTime: nil,
             lateFrequency: nil,
             weatherAdjustmentsEnabled: alarm.weatherAdjustment,
@@ -519,7 +528,10 @@ class SmartAlarmCalculationService: ObservableObject {
             learningAdjustmentsEnabled: true
         )
         
-        print("[SMART-ALARM] User profile payload created")
+        print("[SMART-ALARM] User profile payload created with snooze settings:")
+        print("[SMART-ALARM]   Snooze enabled: \(alarm.snoozeEnabled)")
+        print("[SMART-ALARM]   Snooze duration: \(snoozeDurationMinutes) minutes")
+        print("[SMART-ALARM]   Max snoozes: \(maxSnoozes)")
         
         // Convert alarm settings
         let alarmPayload = AlarmSettingsPayload(
@@ -539,16 +551,18 @@ class SmartAlarmCalculationService: ObservableObject {
                 state: alarm.destinationAddress.state,
                 zip: alarm.destinationAddress.zip
             ),
-            travelMethod: "drive", // Default for now
+            travelMethod: mapTravelMethod(alarm.travelMethod),
             preparationMinutes: Int(alarm.preparationInterval / 60),
             smartEnabled: alarm.smartEnabled,
             weatherAdjustmentsEnabled: alarm.weatherAdjustment,
             trafficAdjustmentsEnabled: alarm.trafficAdjustment,
             transitAdjustmentsEnabled: alarm.transitAdjustment,
-            isRepeating: true, // Simplified for now
+            isRepeating: alarm.isRepeating,
             specificDate: extractSpecificDate(from: alarm.schedule),
             isEnabled: alarm.isEnabled,
-            snoozeEnabled: true, // Default
+            snoozeEnabled: alarm.snoozeEnabled,
+            maxSnoozes: alarm.maxSnoozes,
+            snoozeMinutes: alarm.snoozeMinutes,
             vibrationEnabled: alarm.vibrationEnabled
         )
         

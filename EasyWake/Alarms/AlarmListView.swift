@@ -517,49 +517,56 @@ struct AlarmListView: View {
                                 if isRTL {
                                     normalizedTranslation = max(0, min(maxSwipe, translation.width))
                                 } else {
-                                    normalizedTranslation = min(
-                                        0, max(-maxSwipe, translation.width))
+                                    normalizedTranslation = min(0, max(-maxSwipe, translation.width))
                                 }
-
-                                swipeOffsets[alarm.id] = normalizedTranslation
+                                
+                                // Add smooth interpolation with rubber band effect
+                                withAnimation(.interactiveSpring(response: 0.15, dampingFraction: 0.95, blendDuration: 0)) {
+                                    if abs(normalizedTranslation) > deleteButtonWidth * 0.8 {
+                                        // Rubber band effect when approaching the limit
+                                        let excess = abs(normalizedTranslation) - (deleteButtonWidth * 0.8)
+                                        let dampened = deleteButtonWidth * 0.8 + (excess * 0.3)
+                                        swipeOffsets[alarm.id] = normalizedTranslation < 0 ? -dampened : dampened
+                                    } else {
+                                        swipeOffsets[alarm.id] = normalizedTranslation
+                                    }
+                                }
                             }
                         }
+
+                        // Update the .onEnded handler for smoother spring animation:
                         .onEnded { value in
                             if isDeleting.contains(alarm.id) { return }
-
+                            
                             let translation = value.translation
                             let velocity = value.velocity
                             let startLocation = value.startLocation
                             let currentLocation = value.location
-
+                            
                             let deltaX = currentLocation.x - startLocation.x
                             let deltaY = currentLocation.y - startLocation.y
                             let angle = atan2(abs(deltaY), abs(deltaX))
-
+                            
                             let isHorizontalSwipe = angle < (25 * .pi / 180)
                             let horizontalDistance = abs(translation.width)
-
+                            
                             if isHorizontalSwipe && horizontalDistance > 30 {
                                 let shouldShowDelete: Bool
                                 if isRTL {
-                                    shouldShowDelete =
-                                        translation.width > swipeThreshold || velocity.width > 1000
+                                    shouldShowDelete = translation.width > swipeThreshold || velocity.width > 500
                                 } else {
-                                    shouldShowDelete =
-                                        translation.width < -swipeThreshold
-                                        || velocity.width < -1000
+                                    shouldShowDelete = translation.width < -swipeThreshold || velocity.width < -500
                                 }
-
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                
+                                withAnimation(.interpolatingSpring(stiffness: 300, damping: 30)) {
                                     if shouldShowDelete {
-                                        swipeOffsets[alarm.id] =
-                                            isRTL ? deleteButtonWidth : -deleteButtonWidth
+                                        swipeOffsets[alarm.id] = isRTL ? deleteButtonWidth : -deleteButtonWidth
                                     } else {
                                         swipeOffsets[alarm.id] = 0
                                     }
                                 }
                             } else {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                withAnimation(.interpolatingSpring(stiffness: 300, damping: 30)) {
                                     swipeOffsets[alarm.id] = 0
                                 }
                             }

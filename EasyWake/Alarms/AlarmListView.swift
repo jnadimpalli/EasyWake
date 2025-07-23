@@ -1,12 +1,11 @@
-// AlarmListView.swift - Simplified Version
+// AlarmListView.swift
 
 import SwiftUI
 
 // MARK: - Custom Colors
 extension Color {
-    static let customBlue = Color(red: 0 / 255, green: 187 / 255, blue: 249 / 255)  // #00BBF9
+    static let customBlue = Color(red: 18 / 255, green: 176 / 255, blue: 228 / 255)  // #00BBF9
 
-    // Adaptive colors for light/dark mode
     static let alarmCardBackground = Color(
         UIColor { traitCollection in
             traitCollection.userInterfaceStyle == .dark
@@ -70,11 +69,10 @@ struct AlarmListView: View {
     @State private var selectedAlarms: Set<UUID> = []
     @State private var showingBatchDeleteAlert: Bool = false
     
-    @State private var refreshID = UUID()
-    
     private let topBarHeight: CGFloat = 60
     private let alarmRowSpacing: CGFloat = 16
     private let sectionPadding: CGFloat = 16
+    private let bottomNavBarHeight: CGFloat = 56
 
     // Helper function to sort weekdays in Mon-Sun order
     private func sortedWeekdaysDisplay(_ weekdays: [Weekday]) -> String {
@@ -100,48 +98,50 @@ struct AlarmListView: View {
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geometry in
-                ZStack {
-                    // MARK: — Main Content
+            VStack(spacing: 0) {
+                // MARK: - Top Bar (Fixed)
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("Alarms")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Button {
+                            store.showingAddModal = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 22, weight: .medium))
+                                .foregroundColor(.customBlue)
+                        }
+                        .frame(width: 44, height: 44)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+
+                    Divider()
+                        .padding(.horizontal, 16)
+                }
+                .frame(height: topBarHeight)
+                .background(Color(.systemBackground))
+
+                // Selection Mode Toolbar
+                if isSelectionMode {
+                    selectionToolbar()
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+
+                // MARK: - Main Content Area
+                if hasUpcomingAlarms {
+                    // Split Layout: Scrollable alarms on top, fixed upcoming alarms at bottom
                     VStack(spacing: 0) {
-                        // Top Bar
-                        VStack(spacing: 0) {
-                            HStack {
-                                Text("Alarms")
-                                    .font(.title2)
-                                    .fontWeight(.semibold)
-                                Spacer()
-                                // Always show + button in top right
-                                Button {
-                                    store.showingAddModal = true
-                                } label: {
-                                    Image(systemName: "plus")
-                                        .font(.system(size: 22, weight: .medium))
-                                        .foregroundColor(.customBlue)
-                                }
-                                .frame(width: 44, height: 44)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-
-                            Divider()
-                                .padding(.horizontal, 16)
-                        }
-                        .frame(height: topBarHeight)
-
-                        // Selection Mode Toolbar
-                        if isSelectionMode {
-                            selectionToolbar()
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-
-                        // Scrollable content
+                        // Alarm List (Scrollable)
                         ScrollView {
                             VStack(spacing: 0) {
                                 if store.alarms.isEmpty {
                                     emptyAlarmStateContent()
+                                        .padding(.top, 40)
                                 } else {
-                                    LazyVStack(spacing: alarmRowSpacing) {
+                                    VStack(spacing: alarmRowSpacing) {
                                         ForEach(store.sortedAlarms) { alarm in
                                             alarmRow(alarm)
                                                 .id(alarm.id)
@@ -149,55 +149,75 @@ struct AlarmListView: View {
                                     }
                                     .padding(.horizontal, sectionPadding)
                                     .padding(.top, sectionPadding)
-                                    .padding(.bottom, 16)
+                                    .padding(.bottom, sectionPadding)
                                 }
                             }
-                            // pad bottom so list scrolls above Upcoming panel
-                            .padding(.bottom, 200)
                         }
+                        .background(Color(.systemGroupedBackground))
+                        
+                        // Upcoming Alarms Section (Fixed at bottom)
+                        VStack(spacing: 0) {
+                            Divider()
+                                .padding(.horizontal, 16)
+                            
+                            UpcomingAlarmsContainer()
+                                .environmentObject(store)
+                                .padding(.top, 12)
+                                .padding(.bottom, 12)
+                        }
+                        .background(Color(.systemBackground))
                     }
-
-                    // MARK: — Upcoming Alarms Panel
-                    if hasUpcomingAlarms {
-                        VStack {
-                            Spacer()
-                            VStack(spacing: 0) {
-                                Divider().padding(.horizontal, 16)
-                                UpcomingAlarmsContainer()
-                                    .environmentObject(store)
-                                    .padding(.top, 12)
-                                    .padding(.bottom, 100)
+                } else {
+                    // Full height scrollable list when no upcoming alarms
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            if store.alarms.isEmpty {
+                                emptyAlarmStateContent()
+                                    .padding(.top, 40)
+                            } else {
+                                VStack(spacing: alarmRowSpacing) {
+                                    ForEach(store.sortedAlarms) { alarm in
+                                        alarmRow(alarm)
+                                            .id(alarm.id)
+                                    }
+                                }
+                                .padding(.horizontal, sectionPadding)
+                                .padding(.top, sectionPadding)
+                                .padding(.bottom, sectionPadding)
                             }
-                            .background(Color(.systemBackground))
                         }
+                        .padding(.bottom, bottomNavBarHeight)
                     }
-
-                    // MARK: — Error Toast
-                    if let error = deletionError {
-                        VStack {
-                            Spacer()
-                            HStack(spacing: 8) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.white)
-                                    .font(.caption)
-                                Text(error)
-                                    .foregroundColor(.white)
-                                    .font(.caption)
-                                    .lineLimit(2)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .background(Color.red)
-                            .cornerRadius(8)
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 140)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
-                        .zIndex(2)
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                withAnimation { deletionError = nil }
-                            }
+                    .background(Color(.systemGroupedBackground))
+                }
+            }
+            // Reserve space for tab bar
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: bottomNavBarHeight)
+            }
+            
+            // MARK: - Error Toast (Overlay)
+            .overlay(alignment: .bottom) {
+                if let error = deletionError {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.white)
+                            .font(.caption)
+                        Text(error)
+                            .foregroundColor(.white)
+                            .font(.caption)
+                            .lineLimit(2)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Color.red)
+                    .cornerRadius(8)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 140)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation { deletionError = nil }
                         }
                     }
                 }
@@ -208,12 +228,16 @@ struct AlarmListView: View {
                 AddAlarmView(
                     alarm: alarm,
                     onSave: { updated in
-                        Task { await dataCoordinator.updateAlarm(updated); refreshID = UUID() }
+                        Task {
+                            await dataCoordinator.updateAlarm(updated)
+                        }
                         alarmToEdit = nil
                     },
                     onCancel: { alarmToEdit = nil },
                     onDelete: { toDelete in
-                        Task { await dataCoordinator.deleteAlarm(toDelete); refreshID = UUID() }
+                        Task {
+                            await dataCoordinator.deleteAlarm(toDelete)
+                        }
                         alarmToEdit = nil
                     }
                 )
@@ -221,7 +245,9 @@ struct AlarmListView: View {
             .fullScreenCover(isPresented: $store.showingAddModal) {
                 AddAlarmView(
                     onSave: { newAlarm in
-                        Task { await dataCoordinator.createAlarm(newAlarm); refreshID = UUID() }
+                        Task {
+                            await dataCoordinator.createAlarm(newAlarm)
+                        }
                         store.showingAddModal = false
                     },
                     onCancel: { store.showingAddModal = false }
@@ -237,19 +263,15 @@ struct AlarmListView: View {
             } message: {
                 Text("This cannot be undone.")
             }
-            .onAppear { if isSelectionMode { exitSelectionMode() } }
-            .onChange(of: store.alarms) { _, _ in cleanupStaleUIState() }
+            .onAppear {
+                if isSelectionMode {
+                    exitSelectionMode()
+                }
+            }
+            .onChange(of: store.alarms) { _, _ in
+                cleanupStaleUIState()
+            }
             .navigationBarBackButtonHidden(true)
-        }
-        .id(refreshID)
-        .onReceive(NotificationCenter.default.publisher(for: .alarmCreated)) { _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { refreshID = UUID() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .alarmUpdated)) { note in
-            if note.userInfo?["fromCreation"] as? Bool != true { refreshID = UUID() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .alarmDeleted)) { _ in
-            cleanupStaleUIState(); refreshID = UUID()
         }
     }
 
@@ -257,9 +279,6 @@ struct AlarmListView: View {
     @ViewBuilder
     private func emptyAlarmStateContent() -> some View {
         VStack(spacing: 0) {
-            Spacer()
-                .frame(height: 24)
-
             Image("emptyAlarmSet")
                 .resizable()
                 .scaledToFit()
@@ -281,8 +300,6 @@ struct AlarmListView: View {
             Text("Tap + to create your first alarm")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-
-            Spacer(minLength: 40)
         }
     }
 
@@ -310,7 +327,6 @@ struct AlarmListView: View {
                 swipeOffsets.removeValue(forKey: alarm.id)
                 isDeleting.remove(alarm.id)
                 selectedAlarms.remove(alarm.id)
-                refreshID = UUID()
             }
         }
     }
@@ -325,7 +341,7 @@ struct AlarmListView: View {
         }
     }
 
-    // MARK: – Alarm Row with Multi-Select Support and Toggle Switch
+    // MARK: – Alarm Row (unchanged)
     @ViewBuilder
     private func alarmRow(_ alarm: Alarm) -> some View {
         let swipeOffset = swipeOffsets[alarm.id] ?? 0
@@ -377,7 +393,7 @@ struct AlarmListView: View {
                             .opacity(alarm.isEnabled ? 1.0 : 0.8)
 
                         if alarm.smartEnabled {
-                            Image(systemName: "brain.head.profile")
+                            Image(systemName: "brain")
                                 .foregroundColor(alarm.isEnabled ? .customBlue : .disabledText)
                                 .font(.body)
                                 .opacity(alarm.isEnabled ? 1.0 : 0.8)
@@ -520,10 +536,8 @@ struct AlarmListView: View {
                                     normalizedTranslation = min(0, max(-maxSwipe, translation.width))
                                 }
                                 
-                                // Add smooth interpolation with rubber band effect
                                 withAnimation(.interactiveSpring(response: 0.15, dampingFraction: 0.95, blendDuration: 0)) {
                                     if abs(normalizedTranslation) > deleteButtonWidth * 0.8 {
-                                        // Rubber band effect when approaching the limit
                                         let excess = abs(normalizedTranslation) - (deleteButtonWidth * 0.8)
                                         let dampened = deleteButtonWidth * 0.8 + (excess * 0.3)
                                         swipeOffsets[alarm.id] = normalizedTranslation < 0 ? -dampened : dampened
@@ -533,8 +547,6 @@ struct AlarmListView: View {
                                 }
                             }
                         }
-
-                        // Update the .onEnded handler for smoother spring animation:
                         .onEnded { value in
                             if isDeleting.contains(alarm.id) { return }
                             

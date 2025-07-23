@@ -40,7 +40,7 @@ struct LoginView: View {
                 .padding(.trailing, 10)
                 
                 // Title
-                Text("Welcome to EZ Wake!")
+                Text("Welcome to Easy Wake!")
                     .font(.title)
                     .bold()
                 
@@ -55,24 +55,7 @@ struct LoginView: View {
                 // Password Field with eye toggle
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Password").bold()
-                    HStack {
-                        Group {
-                            if showPassword {
-                                TextField("Enter Password", text: $password)
-                            } else {
-                                SecureField("Enter Password", text: $password)
-                            }
-                        }
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(maxWidth: 360)
-                        
-                        Button {
-                            showPassword.toggle()
-                        } label: {
-                            Image(systemName: showPassword ? "eye.slash" : "eye")
-                                .foregroundColor(.gray)
-                        }
-                    }
+                    RevealableSecureField(title: "Enter Password", text: $password)
                 }
 
                 // Remember Me & Forgot
@@ -104,26 +87,22 @@ struct LoginView: View {
                 .frame(maxWidth: 400)
 
                 // Sign In Button
-                Button(action: {
+                Spacer().frame(height: 12)
+                Button {
                     errorMessage = ""
                     guard validateInputs() else { return }
                     Task { await loginUser() }
-                }) {
+                } label: {
                     Text("Sign In")
-                        .frame(width: 300)
-                        .padding()
-                        .background(isFormValid ? Color.customBlue : Color.white)
-                        .foregroundColor(isFormValid ? .white : .customBlue)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.customBlue, lineWidth: isFormValid ? 0 : 2)
-                        )
-                        .cornerRadius(10)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(isFormValid ? .white : .customBlue)
+                        .frame(width: 280)
                 }
+                .buttonStyle(PillButtonStyle(fill: isFormValid ? Color.customBlue : Color.white, border: isFormValid ? .white : .customBlue))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
                 .disabled(!isFormValid || isLoading)
-                .frame(width: 300)
-                .buttonStyle(PlainButtonStyle())
-                .padding(.top, 10)
                 
                 // Error message
                 if !errorMessage.isEmpty {
@@ -133,14 +112,26 @@ struct LoginView: View {
                 }
 
                 // OR + Social / navigation
-                Text("Or")
-                    .font(.subheadline)
-                Button("Sign In with Google") { /*…*/ }
-                    .frame(width: 300).padding().background(Color.red).foregroundColor(.white).cornerRadius(10)
+                OrDivider()
+
+                // Social buttons
+                VStack(spacing: 12) {
+                    SocialButton(type: .google,
+                                 title: "Continue with Google") {
+                        // TODO: Google sign-in
+                    }
                     .disabled(isLoading)
-                Button("Sign In with Apple") { /*…*/ }
-                    .frame(width: 300).padding().background(Color.black).foregroundColor(.white).cornerRadius(10)
+                    .frame(maxWidth: 320)
+                    
+                    Spacer().frame(height: 4)
+
+                    SocialButton(type: .apple,
+                                 title: "Continue with Apple") {
+                        // TODO: Apple sign-in
+                    }
                     .disabled(isLoading)
+                    .frame(maxWidth: 320)
+                }
                 
                 // Loading Overlay
                 if isLoading {

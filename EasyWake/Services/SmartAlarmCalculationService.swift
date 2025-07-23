@@ -819,7 +819,7 @@ struct SmartAlarmStatusView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: "brain.head.profile")
+                Image(systemName: "brain")
                     .foregroundColor(.customBlue)
                 Text("Smart Alarm")
                     .font(.headline)

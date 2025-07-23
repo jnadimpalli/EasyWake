@@ -518,7 +518,7 @@ struct DetailedRelevanceRow: View {
                 
                 if relevance.alarm.smartEnabled {
                     DetailRow(
-                        icon: "brain.head.profile",
+                        icon: "brain",
                         title: "Smart Features",
                         value: "Weather & traffic adjustments enabled",
                         color: .purple

@@ -48,13 +48,15 @@ struct RegistrationView: View {
                     TextField("enter email", text: $email)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
 
-                    Text("Password").bold()
-                    SecureField("Enter Password", text: $password)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Password").bold()
+                        RevealableSecureField(title: "Enter Password", text: $password)
+                    }
 
-                    Text("Re-enter Password").bold()
-                    SecureField("Re-enter password", text: $confirmPassword)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Re-enter Password").bold()
+                        RevealableSecureField(title: "Re-enter Password", text: $confirmPassword)
+                    }
                 }
 
                 // MARK: Error
@@ -67,82 +69,66 @@ struct RegistrationView: View {
                 Text("Terms & Conditions")
                     .font(.footnote)
                     .padding(.top, 8)
+                
+                Spacer().frame(height: 4)
 
                 // MARK: Continue Button
                 HStack {
                     Spacer()
-                    Button("Continue") {
+                    Button {
                         errorMessage = ""
                         guard validateInputs() else { return }
                         Task {
                             await createUser()
                         }
+                    } label: {
+                        Text("Continue")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .frame(width: 280)
                     }
-                    .frame(width: 300)
-                    .padding()
-                    .background(isFormValid ? Color.customBlue : Color.gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .buttonStyle(PillButtonStyle(fill: isFormValid ? Color.customBlue : Color.gray, border: isFormValid ? Color.customBlue : .gray))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
                     .disabled(!isFormValid)
-                    .buttonStyle(PlainButtonStyle())
                     Spacer()
                 }
 
                 // MARK: Social Login
-                Text("or")
-                    .font(.subheadline)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                // OR + Social / navigation
+                OrDivider()
 
+                // Social buttons
                 VStack(spacing: 12) {
-                    // Google button with black border
-                    Button(action: { /* Google sign-in */ }) {
-                        HStack(spacing: 12) {
-                            Image("GoogleIcon")
-                                .resizable()
-                                .renderingMode(.original)
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 20, height: 20)
-                            Text("Continue with Google")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: 300)
-                        .padding()
-                        .background(Color.white)
-                        .foregroundColor(.black)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.black, lineWidth: 1)
-                        )
+                    SocialButton(type: .google,
+                                 title: "Continue with Google") {
+                        // TODO: Google sign-in
                     }
+                    .frame(maxWidth: 320)
+                    
+                    Spacer().frame(height: 4)
 
-                    // Apple button (unchanged)
-                    Button(action: { /* Apple sign-in */ }) {
-                        HStack {
-                            Image(systemName: "applelogo")
-                            Text("Continue with Apple")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: 300)
-                        .padding()
-                        .background(Color.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    SocialButton(type: .apple,
+                                 title: "Continue with Apple") {
+                        // TODO: Apple sign-in
                     }
-
-                    // "Skip for now" button - UPDATED
-                    Button("Skip for now") {
+                    .frame(maxWidth: 320)
+                    
+                    Spacer().frame(height: 4)
+                    
+                    Button {
                         showSkipWarning = true
+                    } label: {
+                        Text("Skip for now")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.customBlue)
+                            .frame(maxWidth: 280)
                     }
-                    .frame(maxWidth: 300)
-                    .padding()
-                    .background(Color.white)
-                    .foregroundColor(Color.customBlue)
-                    .cornerRadius(10)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.customBlue, lineWidth: 1)
-                    )
+                    .buttonStyle(PillButtonStyle(fill: .white, border: .customBlue))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
             }

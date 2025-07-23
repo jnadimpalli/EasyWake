@@ -716,12 +716,18 @@ struct AccountActionsSection: View {
     @ObservedObject var session: SessionManager
     
     var body: some View {
-        Section {
-            Button("Log Out", role: .destructive) {
-                viewModel.logout()
-                session.logout()
-            }
+        Button(role: .destructive) {
+            viewModel.logout()
+            session.logout()
+        } label: {
+            Text("Log Out")
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)   // optional: full-width pill
         }
+        .buttonStyle(PillButtonStyle(fill: .red))
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
 }
 
@@ -851,4 +857,6 @@ struct LegalDocumentView: View {
 #Preview {
     ProfileView()
         .environmentObject(SessionManager())
+        .environmentObject(AlarmStore())
+        .environmentObject(DataCoordinator(alarmStore: AlarmStore(), profileViewModel: ProfileViewModel()))
 }

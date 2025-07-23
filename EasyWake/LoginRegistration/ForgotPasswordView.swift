@@ -25,16 +25,21 @@ struct ForgotPasswordView: View {
                     .frame(maxWidth: 400)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            Button("Send Reset Link") {
+            
+            Spacer().frame(height: 4)
+            
+            Button {
                 // Simulate sending email
                 showAlert = true
+            } label: {
+                Text("Reset Password")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)   // optional: full-width pill
             }
-            .frame(maxWidth: 300)
-            .padding()
-            .background(Color.customBlue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
+            .buttonStyle(PillButtonStyle(fill: .customBlue))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
 
             Spacer()
         }

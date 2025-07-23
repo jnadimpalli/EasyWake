@@ -107,20 +107,26 @@ struct ChangePasswordView: View {
 
             // ── Save Button ─────────────────────────────
             Section {
-                Button("Save Password") {
-                    // local validation
-                    guard !newPassword.isEmpty,
-                          newPassword == confirmPassword else {
+                Button {
+                    guard !newPassword.isEmpty, newPassword == confirmPassword else {
                         errorMessage   = "Passwords do not match or are empty."
                         successMessage = nil
                         return
                     }
                     errorMessage   = nil
                     successMessage = nil
-                    Task {
-                        await changePassword()
-                    }
+                    Task { await changePassword() }
+                } label: {
+                    Text("Save Password")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)          // make the label stretch
                 }
+                .pillButton(fill: .customBlue)               // your capsule style
+                .listRowInsets(EdgeInsets(top: 0,            // match text-field width
+                                          leading: 16,
+                                          bottom: 0,
+                                          trailing: 16))
+                .listRowBackground(Color.clear)
             }
         }
         .navigationTitle("Change Password")

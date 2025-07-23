@@ -78,7 +78,7 @@ struct UpcomingAlarmCard: View {
         HStack(spacing: 12) {
             // Alarm icon
             ZStack {
-                Image(systemName: "alarm.waves.left.and.right.fill")
+                Image(systemName: "alarm.waves.left.and.right")
                     .font(.title3)
                     .foregroundColor(.customBlue)
             }
@@ -98,7 +98,7 @@ struct UpcomingAlarmCard: View {
             
             // Smart alarm indicator
             if alarmInfo.alarm.smartEnabled {
-                Image(systemName: "brain.head.profile")
+                Image(systemName: "brain")
                     .font(.system(size: 16))
                     .foregroundColor(.customBlue)
             }

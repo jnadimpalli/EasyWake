@@ -22,7 +22,7 @@ struct GuestModeProfileContent: View {
                 .fontWeight(.bold)
             
             // Description
-            Text("You are currently using EZ Wake as a guest. Login or create an account to access your profile, save addresses, sync settings, and unlock premium features.")
+            Text("You are currently using Easy Wake as a guest. Login or create an account to access your profile, save addresses, sync settings, and unlock premium features.")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
@@ -30,34 +30,26 @@ struct GuestModeProfileContent: View {
             
             // Buttons
             VStack(spacing: 16) {
-                Button(action: {
-                    print("🔵 Login button tapped")
+                Button {
                     showLoginSheet = true
-                }) {
+                } label: {
                     Text("Login to Existing Account")
+                        .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.customBlue)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
                 }
+                .pillButton(fill: .customBlue)
                 .padding(.horizontal, 32)
                 
-                Button(action: {
-                    print("🟢 Register button tapped")
+                Button {
                     showRegisterSheet = true
-                }) {
+                } label: {
                     Text("Create New Account")
+                        .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white)
-                        .foregroundColor(.customBlue)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.customBlue, lineWidth: 2)
-                        )
                 }
+                .pillButton(fill: .clear,
+                            textColor: .customBlue,
+                            border: .customBlue)
                 .padding(.horizontal, 32)
             }
             
@@ -79,11 +71,6 @@ struct GuestModeProfileContent: View {
                 RegistrationViewFromProfile()
                     .environmentObject(session)
             }
-        }
-        .onAppear {
-            print("🎯 GuestModeProfileContent appeared")
-            print("🎯 Session isLoggedIn: \(session.isLoggedIn)")
-            print("🎯 Session hasSkippedLogin: \(session.hasSkippedLogin)")
         }
     }
 }
@@ -128,7 +115,7 @@ struct LoginViewFromProfile: View {
                 .padding(.trailing, 10)
                 
                 // Title
-                Text("Welcome to EZ Wake!")
+                Text("Welcome to Easy Wake!")
                     .font(.title)
                     .bold()
                 
@@ -185,25 +172,18 @@ struct LoginViewFromProfile: View {
                 .frame(maxWidth: 400)
 
                 // Sign In Button
-                Button(action: {
+                Button {
                     errorMessage = ""
                     guard validateInputs() else { return }
                     Task { await loginUser() }
-                }) {
+                } label: {
                     Text("Sign In")
-                        .frame(width: 300)
-                        .padding()
-                        .background(isFormValid ? Color.customBlue : Color.white)
-                        .foregroundColor(isFormValid ? .white : .customBlue)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.customBlue, lineWidth: isFormValid ? 0 : 2)
-                        )
-                        .cornerRadius(10)
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
                 }
+                .pillButton(fill: isFormValid ? .customBlue : .gray.opacity(0.3))
                 .disabled(!isFormValid || isLoading)
-                .frame(width: 300)
-                .buttonStyle(PlainButtonStyle())
+                .frame(maxWidth: 300)
                 .padding(.top, 10)
                 
                 // Error message
@@ -216,12 +196,27 @@ struct LoginViewFromProfile: View {
                 // OR + Social / navigation
                 Text("Or")
                     .font(.subheadline)
-                Button("Sign In with Google") { /*…*/ }
-                    .frame(width: 300).padding().background(Color.red).foregroundColor(.white).cornerRadius(10)
-                    .disabled(isLoading)
-                Button("Sign In with Apple") { /*…*/ }
-                    .frame(width: 300).padding().background(Color.black).foregroundColor(.white).cornerRadius(10)
-                    .disabled(isLoading)
+                Button { /* Google */ } label: {
+                    HStack(spacing: 12) {
+                        Image("GoogleIcon")
+                            .resizable().aspectRatio(contentMode: .fit)
+                            .frame(width: 20, height: 20)
+                        Text("Continue with Google").fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .pillButton(fill: .white, textColor: .black, border: .black)
+                .frame(maxWidth: 300)
+
+                Button { /* Apple */ } label: {
+                    HStack {
+                        Image(systemName: "applelogo")
+                        Text("Continue with Apple").fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .pillButton(fill: .black)
+                .frame(maxWidth: 300)
                 
                 // Loading Overlay
                 if isLoading {
@@ -268,7 +263,6 @@ struct LoginViewFromProfile: View {
         // CRITICAL: Watch for login success and dismiss
         .onChange(of: session.isLoggedIn) { _, isLoggedIn in
             if isLoggedIn {
-                print("🎉 Login successful, dismissing sheet")
                 dismiss()
             }
         }
@@ -353,7 +347,6 @@ struct LoginViewFromProfile: View {
                 // Mark onboarding complete and login with session
                 didCompleteOnboarding = true
                 await session.login(user: username, password: password)
-                print("🎉 Login complete, session updated")
                 
             } else {
                 if let err = json?["error"] as? String {
@@ -416,13 +409,15 @@ struct RegistrationViewFromProfile: View {
                     TextField("enter email", text: $email)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
 
-                    Text("Password").bold()
-                    SecureField("Enter Password", text: $password)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Password").bold()
+                        RevealableSecureField(title: "Enter Password", text: $password)
+                    }
 
-                    Text("Re-enter Password").bold()
-                    SecureField("Re-enter password", text: $confirmPassword)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Re-enter Password").bold()
+                        RevealableSecureField(title: "Re-enter Password", text: $confirmPassword)
+                    }
                 }
 
                 // MARK: Error
@@ -432,71 +427,54 @@ struct RegistrationViewFromProfile: View {
                         .font(.footnote)
                 }
 
-                Text("By continuing, you agree to our Terms & Conditions")
+                Text("Terms & Conditions")
                     .font(.footnote)
                     .padding(.top, 8)
+                
+                Spacer().frame(height: 4)
 
                 // MARK: Continue Button
                 HStack {
                     Spacer()
-                    Button("Create Account") {
+                    Button {
                         errorMessage = ""
                         guard validateInputs() else { return }
                         Task {
                             await createUser()
                         }
+                    } label: {
+                        Text("Continue")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .frame(width: 280)
                     }
-                    .frame(width: 300)
-                    .padding()
-                    .background(isFormValid ? Color.customBlue : Color.gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .disabled(!isFormValid || isLoading)
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(PillButtonStyle(fill: isFormValid ? Color.customBlue : Color.gray, border: isFormValid ? Color.customBlue : .gray))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .disabled(!isFormValid)
                     Spacer()
                 }
 
                 // MARK: Social Login
-                Text("or")
-                    .font(.subheadline)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                // OR + Social / navigation
+                OrDivider()
 
+                // Social buttons
                 VStack(spacing: 12) {
-                    // Google button with black border
-                    Button(action: { /* Google sign-in */ }) {
-                        HStack(spacing: 12) {
-                            Image("GoogleIcon")
-                                .resizable()
-                                .renderingMode(.original)
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 20, height: 20)
-                            Text("Continue with Google")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: 300)
-                        .padding()
-                        .background(Color.white)
-                        .foregroundColor(.black)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.black, lineWidth: 1)
-                        )
+                    SocialButton(type: .google,
+                                 title: "Continue with Google") {
+                        // TODO: Google sign-in
                     }
+                    .frame(maxWidth: 320)
+                    
+                    Spacer().frame(height: 4)
 
-                    // Apple button (unchanged)
-                    Button(action: { /* Apple sign-in */ }) {
-                        HStack {
-                            Image(systemName: "applelogo")
-                            Text("Continue with Apple")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: 300)
-                        .padding()
-                        .background(Color.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    SocialButton(type: .apple,
+                                 title: "Continue with Apple") {
+                        // TODO: Apple sign-in
                     }
+                    .frame(maxWidth: 320)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
                 
@@ -533,7 +511,6 @@ struct RegistrationViewFromProfile: View {
         // CRITICAL: Watch for login success and dismiss
         .onChange(of: session.isLoggedIn) { _, isLoggedIn in
             if isLoggedIn {
-                print("🎉 Registration successful, dismissing sheet")
                 dismiss()
             }
         }
@@ -640,7 +617,6 @@ struct RegistrationViewFromProfile: View {
                 
                 didCompleteOnboarding = true
                 await session.completeRegistration(user: email, password: password)
-                print("🎉 Registration complete, session updated")
                 
             } else {
                 if let err = json?["error"] as? String {

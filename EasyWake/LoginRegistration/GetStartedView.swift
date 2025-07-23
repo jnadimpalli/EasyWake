@@ -40,38 +40,37 @@ struct GetStartedView: View {
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
                 .frame(height: 400)
 
-                Spacer()
+                Spacer().frame(height: 32)
 
                 // MARK: Navigation Buttons
                 GeometryReader { geometry in
                     VStack(spacing: 16) {
                         // Get Started Button
-                        Button("Get Started") {
+                        Button {
                             navigateToRegistration = true
+                        } label: {
+                            Text("Get Started")
+                                .fontWeight(.semibold)
+                                .frame(width: geometry.size.width * 0.6)
                         }
-                        .frame(width: geometry.size.width * 0.6)
-                        .padding()
-                        .background(Color.customBlue)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.customBlue, lineWidth: 2)
-                        )
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(PillButtonStyle(fill: .customBlue))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
 
                         // Login Button
-                        Button("Login") {
+                        Button {
                             navigateToLogin = true
+                        } label: {
+                            Text("Login")
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.customBlue)
+                                .frame(width: geometry.size.width * 0.6)
                         }
-                        .frame(width: geometry.size.width * 0.6)
-                        .padding()
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.customBlue, lineWidth: 2)
-                        )
-                        .foregroundColor(.customBlue)
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(PillButtonStyle(fill: .white, border: .customBlue))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
                     .frame(width: geometry.size.width)
                 }

@@ -288,6 +288,7 @@ class SmartAlarmCalculationService: ObservableObject {
     private let lambdaURL = "https://p6fldqu7xje5zuoje4axc4oydi0bzyod.lambda-url.us-east-1.on.aws/"
     private let session = URLSession.shared
     private var cancellables = Set<AnyCancellable>()
+    private let rateLimiter = LambdaRateLimiter.shared
     
     // MARK: - Public Interface
     
@@ -298,6 +299,18 @@ class SmartAlarmCalculationService: ObservableObject {
         currentLocation: CLLocationCoordinate2D? = nil,
         forceRecalculation: Bool = false
     ) async throws -> SmartAlarmResponse {
+        
+        // Check rate limiting unless forced
+        if !forceRecalculation {
+            guard rateLimiter.canMakeRequest(for: alarm.id) else {
+                if let timeRemaining = rateLimiter.timeUntilNextRequest(for: alarm.id) {
+                    let minutes = Int(timeRemaining / 60)
+                    print("[SMART-ALARM] Rate limited. Can retry in \(minutes) minutes")
+                    throw SmartAlarmError.rateLimited(retryAfter: timeRemaining)
+                }
+                throw SmartAlarmError.rateLimited(retryAfter: 0)
+            }
+        }
         
         print("[SMART-ALARM] Starting smart wake time calculation for alarm: \(alarm.name) (ID: \(alarm.id.uuidString))")
         print("[SMART-ALARM] Alarm settings - Smart: \(alarm.smartEnabled), Weather: \(alarm.weatherAdjustment), Traffic: \(alarm.trafficAdjustment)")
@@ -404,6 +417,11 @@ class SmartAlarmCalculationService: ObservableObject {
             if calculationHistory.count > 10 {
                 calculationHistory = Array(calculationHistory.suffix(10))
                 print("[SMART-ALARM] Trimmed calculation history to 10 entries")
+            }
+            
+            // Record successful request for rate limiting
+            if !forceRecalculation {
+                rateLimiter.recordRequest(for: alarm.id)
             }
             
             print("[SMART-ALARM] Smart alarm calculation completed successfully")
@@ -783,6 +801,7 @@ enum SmartAlarmError: LocalizedError {
     case decodingError(Error)
     case networkError(Error)
     case missingData
+    case rateLimited(retryAfter: TimeInterval)
     
     var errorDescription: String? {
         switch self {
@@ -802,6 +821,9 @@ enum SmartAlarmError: LocalizedError {
             return "Network error: \(error.localizedDescription)"
         case .missingData:
             return "Missing required data for calculation"
+        case .rateLimited(let retryAfter):
+            let minutes = Int(retryAfter / 60)
+            return "Too many requests. Please try again in \(minutes) minutes"
         }
     }
 }

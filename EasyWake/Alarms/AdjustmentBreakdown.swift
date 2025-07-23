@@ -153,7 +153,7 @@ struct AlarmBreakdownSheet: View {
                 // Preparation Time
                 AdjustmentBreakdownRow(
                     icon: "figure.walk",
-                    iconColor: .customBlue,
+                    iconColor: .primary,
                     title: "Preparation Time",
                     minutes: breakdown.preparationTime,
                     description: "Time to get ready"
@@ -162,7 +162,7 @@ struct AlarmBreakdownSheet: View {
                 // Base Commute
                 AdjustmentBreakdownRow(
                     icon: "car.fill",
-                    iconColor: .purple,
+                    iconColor: .primary,
                     title: "Base Commute",
                     minutes: breakdown.baseCommute,
                     description: "Normal travel time"
@@ -172,7 +172,7 @@ struct AlarmBreakdownSheet: View {
                 if breakdown.weatherDelays > 0 {
                     AdjustmentBreakdownRow(
                         icon: "cloud.rain.fill",
-                        iconColor: .cyan,
+                        iconColor: .primary,
                         title: "Weather Delays",
                         minutes: breakdown.weatherDelays,
                         description: "Additional time due to weather",
@@ -184,7 +184,7 @@ struct AlarmBreakdownSheet: View {
                 if breakdown.trafficDelays > 0 {
                     AdjustmentBreakdownRow(
                         icon: "car.2.fill",
-                        iconColor: .red,
+                        iconColor: .primary,
                         title: "Traffic Delays",
                         minutes: breakdown.trafficDelays,
                         description: "Current traffic conditions",
@@ -196,7 +196,7 @@ struct AlarmBreakdownSheet: View {
                 if breakdown.snoozeBuffer > 0 {
                     AdjustmentBreakdownRow(
                         icon: "zzz",
-                        iconColor: .indigo,
+                        iconColor: .primary,
                         title: "Snooze Buffer",
                         minutes: breakdown.snoozeBuffer,
                         description: "Based on your snooze habits",

@@ -25,7 +25,7 @@ struct SettingsView: View {
     SettingsView()
 }//
 //  SettingsView.swift
-//  EZ Wake
+//  Easy Wake
 //
 //  Created by Prafulla Bhupathi Raju on 6/26/25.
 //

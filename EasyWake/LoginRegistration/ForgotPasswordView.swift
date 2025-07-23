@@ -1,6 +1,6 @@
 //
 //  ForgotPasswordView.swift
-//  EZ Wake
+//  Easy Wake
 //
 //  Created by Prafulla Bhupathi Raju on 6/25/25.
 //
@@ -47,7 +47,7 @@ struct ForgotPasswordView: View {
         .alert(isPresented: $showAlert) {
             Alert(
                 title: Text("Password Reset Sent"),
-                message: Text("Hi! Just a test from EZ Wake :)"),
+                message: Text("Hi! Just a test from Easy Wake :)"),
                 dismissButton: .default(Text("OK"))
             )
         }

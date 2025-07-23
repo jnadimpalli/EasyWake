@@ -68,6 +68,7 @@ struct AlarmListView: View {
     @State private var isSelectionMode: Bool = false
     @State private var selectedAlarms: Set<UUID> = []
     @State private var showingBatchDeleteAlert: Bool = false
+    @State private var showingAlarmLimitAlert: Bool = false
     
     private let topBarHeight: CGFloat = 60
     private let alarmRowSpacing: CGFloat = 16
@@ -107,11 +108,15 @@ struct AlarmListView: View {
                             .fontWeight(.semibold)
                         Spacer()
                         Button {
-                            store.showingAddModal = true
+                            if store.canAddMoreAlarms {
+                                store.showingAddModal = true
+                            } else {
+                                showingAlarmLimitAlert = true
+                            }
                         } label: {
                             Image(systemName: "plus")
                                 .font(.system(size: 22, weight: .medium))
-                                .foregroundColor(.customBlue)
+                                .foregroundColor(store.canAddMoreAlarms ? .customBlue : .gray)
                         }
                         .frame(width: 44, height: 44)
                     }
@@ -263,9 +268,25 @@ struct AlarmListView: View {
             } message: {
                 Text("This cannot be undone.")
             }
+            .alert(
+                "Alarm Limit Reached",
+                isPresented: $showingAlarmLimitAlert
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("You've reached the maximum of 50 alarms. Please delete some alarms before adding new ones.")
+            }
             .onAppear {
                 if isSelectionMode {
                     exitSelectionMode()
+                }
+                // Listen for alarm limit reached
+                NotificationCenter.default.addObserver(
+                    forName: .alarmLimitReached,
+                    object: nil,
+                    queue: .main
+                ) { _ in
+                    showingAlarmLimitAlert = true
                 }
             }
             .onChange(of: store.alarms) { _, _ in

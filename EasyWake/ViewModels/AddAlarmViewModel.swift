@@ -36,6 +36,8 @@ class AddAlarmViewModel: ObservableObject {
     @Published var selectedWeekdays: Set<Weekday> = []
     @Published var selectedDate: Date = Date()
     
+    weak var alarmStore: AlarmStore?
+    
     private var player: AVAudioPlayer?
     private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
     private let selectionFeedback = UISelectionFeedbackGenerator()
@@ -100,8 +102,21 @@ class AddAlarmViewModel: ObservableObject {
     }
     
     init(alarm: Alarm) {
-        self.alarm = alarm
-        self.isEditMode = alarm.name != ""
+        // UPDATED: Check if this is a new alarm or editing existing
+        if alarm.name.isEmpty {
+            // New alarm - set default to specific date (today)
+            var newAlarm = alarm
+            newAlarm.schedule = .specificDate(Date())
+            self.alarm = newAlarm
+            self.isEditMode = false
+            self.isRepeatDaily = false
+            self.selectedDate = Date()
+        } else {
+            // Existing alarm - keep current schedule
+            self.alarm = alarm
+            self.isEditMode = true
+        }
+        
         self.selectedTravelMethod = ProfileViewModel().preferences.travelMethod
         
         // Load profile data

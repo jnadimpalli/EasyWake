@@ -48,6 +48,7 @@ class WeatherAlarmService: ObservableObject {
     
     // NEW: Track dismissed adjustments for current session
     @Published private var sessionDismissedAlarmIds: Set<UUID> = []
+    @EnvironmentObject var weatherAlarmService: WeatherAlarmService
     
     struct AlarmWithAdjustment: Identifiable {
         let id = UUID()

@@ -1,4 +1,4 @@
-// UpcomingAlarms.swift
+// UpcomingAlarms.swift - Enhanced with Refresh Management
 
 import SwiftUI
 
@@ -20,6 +20,12 @@ struct UpcomingAlarmInfo: Identifiable, Equatable  {
     
     var formattedTimeUntil: String {
         let interval = timeUntilAlarm
+        
+        // Handle negative times
+        if interval < 0 {
+            return "Expired"
+        }
+        
         let hours = Int(interval) / 3600
         let minutes = (Int(interval) % 3600) / 60
         
@@ -28,6 +34,18 @@ struct UpcomingAlarmInfo: Identifiable, Equatable  {
         } else {
             return "\(minutes)m"
         }
+    }
+    
+    // Check if the adjustment data is stale
+    var isStale: Bool {
+        guard let adjustment = adjustment else { return false }
+        
+        let now = Date()
+        let timeSinceLastUpdate = now.timeIntervalSince(adjustment.calculatedAt)
+        let timeUntilAlarm = (adjustedTime ?? scheduledTime).timeIntervalSince(now)
+        
+        // Stale if: last update > 1 hour AND current time within 1 hour of alarm
+        return timeSinceLastUpdate > 3600 && timeUntilAlarm > 0 && timeUntilAlarm <= 3600
     }
     
     static func ==(lhs: UpcomingAlarmInfo, rhs: UpcomingAlarmInfo) -> Bool {
@@ -91,7 +109,7 @@ struct UpcomingAlarmCard: View {
                 
                 Text("In \(alarmInfo.formattedTimeUntil)")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(alarmInfo.timeUntilAlarm < 0 ? .red : .secondary)
             }
             
             Spacer()
@@ -198,8 +216,19 @@ struct UpcomingAlarmCard: View {
             
             Spacer()
             
-            // Arrival time if smart alarm
-            if alarmInfo.alarm.smartEnabled {
+            // Show stale data warning if needed
+            if alarmInfo.isStale {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                    
+                    Text("Update needed")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.orange)
+                }
+            } else if alarmInfo.alarm.smartEnabled {
+                // Arrival time if smart alarm and not stale
                 HStack(spacing: 4) {
                     Image(systemName: "location.fill")
                         .font(.caption)
@@ -219,10 +248,14 @@ struct UpcomingAlarmCard: View {
     // MARK: - Computed Properties
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(.regularMaterial)
+            .fill(Color(alarmInfo.isStale ?
+                  UIColor.systemRed.withAlphaComponent(0.05) :
+                  UIColor.secondarySystemGroupedBackground))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
+                        alarmInfo.isStale ?
+                        Color.red.opacity(0.3) :
                         Color.gray.opacity(0.2),
                         lineWidth: 1.5
                     )
@@ -271,6 +304,9 @@ struct UpcomingAlarmCard: View {
             label += ", adjusted to \(formatTime(alarmInfo.adjustedTime!))"
         }
         label += ", in \(alarmInfo.formattedTimeUntil)"
+        if alarmInfo.isStale {
+            label += ", needs update"
+        }
         return label
     }
     
@@ -383,9 +419,10 @@ struct UpcomingAlarmsCarousel: View {
     }
 }
 
-// MARK: - Upcoming Alarms Container
+// MARK: - Upcoming Alarms Container with Refresh Management
 struct UpcomingAlarmsContainer: View {
     @EnvironmentObject var alarmStore: AlarmStore
+    @EnvironmentObject var weatherAlarmService: WeatherAlarmService
     @State private var showingAlarmDetail: Alarm?
     @State private var showingBreakdownSheet: BreakdownSheetItem?
     @State private var selectedTimeFrame: TimeFrame = .twentyFourHours
@@ -393,6 +430,11 @@ struct UpcomingAlarmsContainer: View {
     
     // Track dismissed alarms for current session
     @State private var sessionDismissedAlarmIds: Set<UUID> = []
+    
+    // Refresh management
+    @State private var refreshTimer: Timer?
+    @State private var lastLambdaRefresh = Date()
+    private let lambdaRefreshInterval: TimeInterval = 300 // 5 minutes
     
     enum TimeFrame: String, CaseIterable {
         case threeHours = "3h"
@@ -444,6 +486,7 @@ struct UpcomingAlarmsContainer: View {
             )
         }
         .sorted { $0.scheduledTime < $1.scheduledTime }
+        .filter { $0.timeUntilAlarm > 0 } // Filter out expired alarms
     }
     
     private var shouldShowSection: Bool {
@@ -461,6 +504,13 @@ struct UpcomingAlarmsContainer: View {
         }
         .fullScreenCover(item: $showingAlarmDetail) { alarm in
             addAlarmView(for: alarm)
+        }
+        .onAppear {
+            startRefreshTimer()
+            checkForLambdaRefresh()
+        }
+        .onDisappear {
+            stopRefreshTimer()
         }
     }
     
@@ -557,12 +607,59 @@ struct UpcomingAlarmsContainer: View {
         )
     }
     
+    // MARK: - Refresh Management
+    
+    private func startRefreshTimer() {
+        // Update UI every minute
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+            // Force view update by changing a @State variable
+            // This will trigger a recomputation of upcomingAlarms
+            self.lastLambdaRefresh = self.lastLambdaRefresh // This triggers a state change
+            
+            // Check if we need a Lambda refresh
+            checkForLambdaRefresh()
+        }
+    }
+    
+    private func stopRefreshTimer() {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+    }
+    
+    private func checkForLambdaRefresh() {
+        let now = Date()
+        let timeSinceLastRefresh = now.timeIntervalSince(lastLambdaRefresh)
+        
+        // Check if any alarms need urgent refresh (within 1 hour and stale)
+        let urgentAlarms = upcomingAlarms.filter { alarm in
+            alarm.timeUntilAlarm > 0 &&
+            alarm.timeUntilAlarm <= 3600 &&
+            alarm.isStale
+        }
+        
+        // Refresh if:
+        // 1. We have urgent alarms that are stale
+        // 2. OR it's been more than 5 minutes since last refresh AND we have alarms in next 3 hours
+        if !urgentAlarms.isEmpty ||
+           (timeSinceLastRefresh > lambdaRefreshInterval &&
+            upcomingAlarms.contains { $0.timeUntilAlarm <= 10800 }) {
+            
+            Task {
+                await weatherAlarmService.refreshAllAdjustments()
+                lastLambdaRefresh = Date()
+            }
+        }
+    }
+    
     // MARK: - Action Handlers
     private func handleTimeFrameChange(_ timeFrame: TimeFrame) {
         selectedTimeFrame = timeFrame
         savedTimeFrame = timeFrame.rawValue
         // Reset dismissed alarms when changing time frame
         sessionDismissedAlarmIds.removeAll()
+        
+        // Check for refresh on time frame change
+        checkForLambdaRefresh()
     }
     
     private func handleCardTap(_ alarmInfo: UpcomingAlarmInfo) {

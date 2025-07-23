@@ -105,7 +105,7 @@ struct CalendarEventsView: View {
     CalendarEventsView()
 }//
 //  CalendarEventsView.swift
-//  EZ Wake
+//  Easy Wake
 //
 //  Created by Prafulla Bhupathi Raju on 6/25/25.
 //

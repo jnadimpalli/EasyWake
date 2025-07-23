@@ -20,6 +20,8 @@ struct AddAlarmView: View {
         onCancel: @escaping () -> Void,
         onDelete: ((Alarm) -> Void)? = nil
     ) {
+        let viewModel = AddAlarmViewModel(alarm: alarm)
+        viewModel.alarmStore = AlarmStore()
         _viewModel = StateObject(wrappedValue: AddAlarmViewModel(alarm: alarm))
         self.onSave = onSave
         self.onCancel = onCancel
@@ -81,6 +83,19 @@ struct AddAlarmView: View {
                             Text(error)
                                 .foregroundColor(.red)
                                 .font(.footnote)
+                        }
+                    }
+                    
+                    // Alarm limit warning if near limit
+                    if !viewModel.isEditMode && viewModel.alarmStore?.alarms.count ?? 0 >= 48 {
+                        Section {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text("You have \(50 - (viewModel.alarmStore?.alarms.count ?? 0)) alarm slots remaining")
+                                    .font(.footnote)
+                                    .foregroundColor(.orange)
+                            }
                         }
                     }
                     

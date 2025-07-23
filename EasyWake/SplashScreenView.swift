@@ -3,17 +3,17 @@ import SwiftUI
 struct SplashScreenView: View {
     var body: some View {
         VStack(spacing: 8) {
-            Image("AppLogo") // Name in Assets.xcassets
+            Image("WhiteLogo")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 150, height: 150)
 
-            Text("EZ Wake")
+            Text("Easy Wake")
                 .font(.system(size: 32, weight: .bold))
-                .foregroundColor(.black)
+                .foregroundColor(.white)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white)
+        .background(Color.customBlue)
     }
 }
 
@@ -21,7 +21,7 @@ struct SplashScreenView: View {
     SplashScreenView()
 }//
 //  SplashScreenView.swift
-//  EZ Wake
+//  Easy Wake
 //
 //  Created by Prafulla Bhupathi Raju on 6/24/25.
 //
